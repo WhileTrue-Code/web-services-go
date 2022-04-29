@@ -2,21 +2,39 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/google/uuid"
 )
 
-func decodeBody(r io.Reader) (*Config, error) {
+func decodeBody(r io.Reader, i int) ([]Config, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
+	var cfglist []Config
 	var cfg Config
-	if err := dec.Decode(&cfg); err != nil {
-		return nil, err
+
+	if i == 0 {
+		if err := dec.Decode(&cfg); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := dec.Decode(&cfglist); err != nil {
+			return nil, err
+		}
 	}
-	return &cfg, nil
+
+	if len(cfglist) == 0 {
+		cfglist = append(cfglist, cfg)
+	}
+
+	if len(cfglist) < 1 {
+		return nil, fmt.Errorf("configuration list is empty")
+	}
+
+	return cfglist, nil
 }
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
