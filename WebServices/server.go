@@ -4,6 +4,8 @@ import (
 	"errors"
 	"mime"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type Service struct {
@@ -87,4 +89,26 @@ func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	renderJSON(w, allTasks)
+}
+
+func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	if v, ok := ts.configs[id]; ok {
+		delete(ts.configs, id)
+		renderJSON(w, v)
+	} else {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+}
+
+func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	if v, ok := ts.groups[id]; ok {
+		delete(ts.groups, id)
+		renderJSON(w, v)
+	} else {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
 }
