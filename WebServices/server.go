@@ -38,6 +38,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	ts.configs[id] = rt[0]
 	renderJSON(w, rt)
 }
+
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
@@ -136,4 +137,21 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 	}
 	renderJSON(w, returnGroup)
+}
+
+func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	group := ts.groups[id]
+
+	rt, err := decodeBody(req.Body, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	idConfig := createId()
+	rt[0].Id = idConfig
+	group.Configs = append(group.Configs, rt[0])
+	ts.groups[id] = group
+	renderJSON(w, rt)
 }
