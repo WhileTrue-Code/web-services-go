@@ -112,3 +112,28 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 }
+
+func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
+	returnConfig := Config{}
+	id := mux.Vars(req)["id"]
+	for _, v := range ts.configs {
+		if id == v.Id {
+			returnConfig = v
+			break
+		}
+	}
+	renderJSON(w, returnConfig)
+}
+
+func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	returnGroup := Group{}
+	for _, v := range ts.groups {
+		if id == v.Id {
+			returnGroup = v
+			break
+		}
+
+	}
+	renderJSON(w, returnGroup)
+}
