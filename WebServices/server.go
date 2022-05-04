@@ -156,15 +156,20 @@ func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request)
 	id := mux.Vars(req)["id"]
 	group := ts.groups[id]
 
-	rt, err := decodeBody(req.Body, 0)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	if len(group.Configs) == 0 {
+		renderJSON(w, "Ne mozete dodati novu konfiguraciju!")
+	} else {
+		rt, err := decodeBody(req.Body, 0)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		idConfig := createId()
+		rt[0].Id = idConfig
+		group.Configs = append(group.Configs, rt[0])
+		ts.groups[id] = group
+		renderJSON(w, rt)
 	}
 
-	idConfig := createId()
-	rt[0].Id = idConfig
-	group.Configs = append(group.Configs, rt[0])
-	ts.groups[id] = group
-	renderJSON(w, rt)
 }
