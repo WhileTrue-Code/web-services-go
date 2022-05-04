@@ -38,6 +38,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	ts.configs[id] = rt[0]
 	renderJSON(w, rt)
 }
+
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
