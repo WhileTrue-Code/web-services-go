@@ -117,24 +117,37 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	returnConfig := Config{}
 	id := mux.Vars(req)["id"]
+	var isExists bool = false
 	for _, v := range ts.configs {
 		if id == v.Id {
 			returnConfig = v
+			isExists = true
 			break
 		}
 	}
-	renderJSON(w, returnConfig)
+	if !isExists {
+		renderJSON(w, "Ne postoji ta konfiguracija!")
+	} else {
+		renderJSON(w, returnConfig)
+	}
+
 }
 
 func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	returnGroup := Group{}
+	var isExists bool = false
 	for _, v := range ts.groups {
 		if id == v.Id {
+			isExists = true
 			returnGroup = v
 			break
 		}
 
 	}
-	renderJSON(w, returnGroup)
+	if !isExists {
+		renderJSON(w, "Ne postoji ta konfiguraciona grupa!")
+	} else {
+		renderJSON(w, returnGroup)
+	}
 }
