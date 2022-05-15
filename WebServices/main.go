@@ -31,7 +31,7 @@ func main() {
 	router.HandleFunc("/groups/", server.getGroupsHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/", server.delConfigGroupsHandler).Methods("DELETE")
-	router.HandleFunc("/config/{id}/", server.viewConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/", server.viewGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/", server.updateConfigHandler).Methods("PUT")
 
