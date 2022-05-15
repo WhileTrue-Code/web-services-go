@@ -33,9 +33,16 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id := createId()
-	rt[0].Id = id
-	ts.configs[id] = rt[0]
+	if rt[0].Id == "" {
+		id := createId()
+		rt[0].Id = id
+		ts.configs[id] = rt[0]
+	} else {
+		id1 := mux.Vars(req)["id"]
+		rt[0].Id = id1
+		ts.configs[id1] = rt[0]
+	}
+
 	renderJSON(w, rt)
 }
 
@@ -117,9 +124,10 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	returnConfig := Config{}
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	var isExists bool = false
 	for _, v := range ts.configs {
-		if id == v.Id {
+		if id == v.Id && version == v.Version {
 			returnConfig = v
 			isExists = true
 			break
