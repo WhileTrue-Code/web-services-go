@@ -21,19 +21,19 @@ func main() {
 	router.StrictSlash(true)
 
 	server := Service{
-		configs: map[string]Config{},
-		groups:  map[string]Group{},
+		configs: map[string][]Config{},
+		groups:  map[string][]Group{},
 	}
 
 	router.HandleFunc("/config/", server.createConfHandler).Methods("POST")
 	router.HandleFunc("/group/", server.createConfGroupHandler).Methods("POST")
 	router.HandleFunc("/configs/", server.getConfigsHandler).Methods("GET")
 	router.HandleFunc("/groups/", server.getGroupsHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", server.delConfigHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/", server.delConfigGroupsHandler).Methods("DELETE")
-	router.HandleFunc("/config/{id}/", server.viewConfigHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.viewGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.updateConfigHandler).Methods("PUT")
+	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{version}/", server.delConfigGroupsHandler).Methods("DELETE")
+	router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", server.viewGroupHandler).Methods("GET")
+	// router.HandleFunc("/group/{id}/", server.updateConfigHandler).Methods("PUT")
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
