@@ -21,8 +21,8 @@ func main() {
 	router.StrictSlash(true)
 
 	server := Service{
-		configs: map[string]Config{},
-		groups:  map[string]Group{},
+		configs: map[string][]Config{},
+		groups:  map[string][]Group{},
 	}
 
 	router.HandleFunc("/config/", server.createConfHandler).Methods("POST")
@@ -33,7 +33,7 @@ func main() {
 	router.HandleFunc("/group/{id}/", server.delConfigGroupsHandler).Methods("DELETE")
 	router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/", server.viewGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.updateConfigHandler).Methods("PUT")
+	// router.HandleFunc("/group/{id}/", server.updateConfigHandler).Methods("PUT")
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
