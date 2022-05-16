@@ -33,13 +33,13 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if rt[0].Id == "" {
+	if rt.Configs[0].Id == "" {
 		id := createId()
-		rt[0].Id = id
-		ts.configs[id] = append(ts.configs[id], rt[0])
+		rt.Configs[0].Id = id
+		ts.configs[id] = append(ts.configs[id], rt.Configs[0])
 	} else {
-		id := rt[0].Id
-		ts.configs[id] = append(ts.configs[id], rt[0])
+		id := rt.Configs[0].Id
+		ts.configs[id] = append(ts.configs[id], rt.Configs[0])
 	}
 
 	renderJSON(w, rt)
@@ -65,14 +65,14 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	for i := range rt {
-		rt[i].Id = createId()
+	for i := range rt.Configs {
+		rt.Configs[i].Id = createId()
 	}
 
 	idgroup := createId()
 	group := Group{
 		Id:      idgroup,
-		Configs: rt,
+		Configs: rt.Configs,
 	}
 	ts.groups[idgroup] = append(ts.groups[idgroup], group)
 	renderJSON(w, group)
@@ -101,25 +101,55 @@ func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	returnConfig := Config{}
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.configs[id]; ok {
-		delete(ts.configs, id)
-		renderJSON(w, v)
+	version := mux.Vars(req)["version"]
+	var isExists bool = false
+	for _, v := range ts.configs {
+		for _, v1 := range v {
+			if id == v1.Id && version == v1.Version {
+				returnConfig = v1
+				delete(ts.configs, id)
+				isExists = true
+				break
+			}
+		}
+	}
+	if !isExists {
+		renderJSON(w, "Ne postoji ta konfiguracija!")
 	} else {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+		renderJSON(w, returnConfig)
 	}
 }
 
 func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
-	if v, ok := ts.groups[id]; ok {
-		delete(ts.groups, id)
-		renderJSON(w, v)
-	} else {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
+	version := mux.Vars(req)["version"]
+	returnGroup := Group{}
+	var isExists bool = false
+	for _, v := range ts.groups {
+		for _, v1 := range v {
+			if id == v1.Id && version == v1.Version {
+				isExists = true
+				returnGroup = v1
+				delete(ts.groups, id)
+				break
+			}
+		}
 	}
+	if !isExists {
+		renderJSON(w, "Ne postoji ta konfiguraciona grupa!")
+	} else {
+		renderJSON(w, returnGroup)
+	}
+
+	// if v, ok := ts.groups[id]; ok {
+	// 	delete(ts.groups, id)
+	// 	renderJSON(w, v)
+	// } else {
+	// 	err := errors.New("key not found")
+	// 	http.Error(w, err.Error(), http.StatusNotFound)
+	// }
 }
 
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -146,11 +176,12 @@ func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 
 func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	returnGroup := Group{}
 	var isExists bool = false
 	for _, v := range ts.groups {
 		for _, v1 := range v {
-			if id == v1.Id {
+			if id == v1.Id && version == v1.Version {
 				isExists = true
 				returnGroup = v1
 				break
