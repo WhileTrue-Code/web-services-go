@@ -27,7 +27,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rt, err := decodeBody(req.Body, 0)
+	rt, _, err := decodeBody(req.Body, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -59,22 +59,23 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rt, err := decodeBody(req.Body, 1)
+	rt, v, err := decodeBody(req.Body, 1)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	for i := range rt.Configs {
-		rt.Configs[i].Id = createId()
+	group := rt
+	group.Version = v
+	if rt.Id == "" {
+		idgroup := createId()
+		group.Id = idgroup
 	}
 
-	idgroup := createId()
-	group := Group{
-		Id:      idgroup,
-		Configs: rt.Configs,
+	if exists := ts.isVersionExist(group); !exists {
+		ts.groups[group.Id] = append(ts.groups[group.Id], group)
 	}
-	ts.groups[idgroup] = append(ts.groups[idgroup], group)
+
 	renderJSON(w, group)
 }
 
@@ -92,9 +93,7 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []Group{}
 	for _, v := range ts.groups {
-		for _, v1 := range v {
-			allTasks = append(allTasks, v1)
-		}
+		allTasks = append(allTasks, v...)
 	}
 
 	renderJSON(w, allTasks)
@@ -218,3 +217,16 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 // 	}
 
 // }
+
+func (ts *Service) isVersionExist(g Group) bool {
+	if groups, ok := ts.groups[g.Id]; ok {
+		for k, v := range groups {
+			if v.Version == g.Version {
+				groups[k] = g
+				return true
+			}
+		}
+	}
+
+	return false
+}

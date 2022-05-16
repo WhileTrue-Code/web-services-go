@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func decodeBody(r io.Reader, i int) (Group, error) {
+func decodeBody(r io.Reader, i int) (Group, string, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
@@ -18,23 +18,24 @@ func decodeBody(r io.Reader, i int) (Group, error) {
 
 	if i == 0 {
 		if err := dec.Decode(&cfg); err != nil {
-			return group, err
+			return Group{}, "", err
 		}
 	} else {
 		if err := dec.Decode(&group); err != nil {
-			return group, err
+			return Group{}, "", err
 		}
 	}
 
 	if len(group.Configs) == 0 {
 		group.Configs = append(group.Configs, cfg)
+		return group, "", nil
 	}
 
 	if len(group.Configs) < 1 {
-		return group, fmt.Errorf("configuration list is empty")
+		return Group{}, "", fmt.Errorf("configuration list is empty")
 	}
 
-	return group, nil
+	return group, group.Version, nil
 }
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
