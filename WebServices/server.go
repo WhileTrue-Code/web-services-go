@@ -9,8 +9,8 @@ import (
 )
 
 type Service struct {
-	configs map[string]Config
-	groups  map[string]Group
+	configs map[string][]Config
+	groups  map[string][]Group
 }
 
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
@@ -36,11 +36,10 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	if rt[0].Id == "" {
 		id := createId()
 		rt[0].Id = id
-		ts.configs[id] = rt[0]
+		ts.configs[id] = append(ts.configs[id], rt[0])
 	} else {
-		id1 := mux.Vars(req)["id"]
-		rt[0].Id = id1
-		ts.configs[id1] = rt[0]
+		id := rt[0].Id
+		ts.configs[id] = append(ts.configs[id], rt[0])
 	}
 
 	renderJSON(w, rt)
@@ -75,7 +74,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		Id:      idgroup,
 		Configs: rt,
 	}
-	ts.groups[idgroup] = group
+	ts.groups[idgroup] = append(ts.groups[idgroup], group)
 	renderJSON(w, group)
 }
 
@@ -83,7 +82,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []Config{}
 	for _, v := range ts.configs {
-		allTasks = append(allTasks, v)
+		allTasks = append(allTasks, v...)
 	}
 
 	renderJSON(w, allTasks)
@@ -93,7 +92,9 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks := []Group{}
 	for _, v := range ts.groups {
-		allTasks = append(allTasks, v)
+		for _, v1 := range v {
+			allTasks = append(allTasks, v1)
+		}
 	}
 
 	renderJSON(w, allTasks)
@@ -127,10 +128,12 @@ func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	version := mux.Vars(req)["version"]
 	var isExists bool = false
 	for _, v := range ts.configs {
-		if id == v.Id && version == v.Version {
-			returnConfig = v
-			isExists = true
-			break
+		for _, v1 := range v {
+			if id == v1.Id && version == v1.Version {
+				returnConfig = v1
+				isExists = true
+				break
+			}
 		}
 	}
 	if !isExists {
@@ -146,12 +149,13 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 	returnGroup := Group{}
 	var isExists bool = false
 	for _, v := range ts.groups {
-		if id == v.Id {
-			isExists = true
-			returnGroup = v
-			break
+		for _, v1 := range v {
+			if id == v1.Id {
+				isExists = true
+				returnGroup = v1
+				break
+			}
 		}
-
 	}
 	if !isExists {
 		renderJSON(w, "Ne postoji ta konfiguraciona grupa!")
@@ -160,24 +164,26 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	group := ts.groups[id]
+//TODO change..
+// func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
+// 	id := mux.Vars(req)["id"]
+// 	version := mux.Vars(req)["version"]
+// 	group := ts.groups[id]
 
-	if len(group.Configs) == 0 {
-		renderJSON(w, "Ne mozete dodati novu konfiguraciju!")
-	} else {
-		rt, err := decodeBody(req.Body, 0)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+// 	if len(group.Configs) == 0 {
+// 		renderJSON(w, "Ne mozete dodati novu konfiguraciju!")
+// 	} else {
+// 		rt, err := decodeBody(req.Body, 0)
+// 		if err != nil {
+// 			http.Error(w, err.Error(), http.StatusBadRequest)
+// 			return
+// 		}
 
-		idConfig := createId()
-		rt[0].Id = idConfig
-		group.Configs = append(group.Configs, rt[0])
-		ts.groups[id] = group
-		renderJSON(w, rt)
-	}
+// 		idConfig := createId()
+// 		rt[0].Id = idConfig
+// 		group.Configs = append(group.Configs, rt[0])
+// 		ts.groups[id] = group
+// 		renderJSON(w, rt)
+// 	}
 
-}
+// }
