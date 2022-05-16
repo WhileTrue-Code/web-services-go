@@ -9,5 +9,5 @@ type Config struct {
 type Group struct {
 	Id      string
 	Configs []Config
-	Version string
+	Version string `json: "version"`
 }
