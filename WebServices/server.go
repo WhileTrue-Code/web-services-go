@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"mime"
 	"net/http"
 
@@ -124,13 +125,16 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 	version := mux.Vars(req)["version"]
 	returnGroup := Group{}
 	var isExists bool = false
-	for _, v := range ts.groups {
-		for _, v1 := range v {
-			if id == v1.Id && version == v1.Version {
-				isExists = true
-				returnGroup = v1
-				delete(ts.groups, id)
-				break
+	for keyId, v := range ts.groups {
+		if keyId == id {
+			for i, g := range v {
+				if g.Version == version {
+					isExists = true
+					returnGroup = g
+					ts.groups[id] = removeGroup(v, i)
+					fmt.Println(v)
+					break
+				}
 			}
 		}
 	}
@@ -227,4 +231,8 @@ func (ts *Service) versionControl(g Group) {
 	}
 
 	ts.groups[g.Id] = append(ts.groups[g.Id], g)
+}
+
+func removeGroup(groups []Group, i int) []Group {
+	return append(groups[:i], groups[i+1:]...)
 }
