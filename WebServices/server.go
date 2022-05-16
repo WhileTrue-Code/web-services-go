@@ -72,9 +72,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		group.Id = idgroup
 	}
 
-	if exists := ts.isVersionExist(group); !exists {
-		ts.groups[group.Id] = append(ts.groups[group.Id], group)
-	}
+	ts.versionControl(group)
 
 	renderJSON(w, group)
 }
@@ -218,15 +216,15 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 // }
 
-func (ts *Service) isVersionExist(g Group) bool {
+func (ts *Service) versionControl(g Group) {
 	if groups, ok := ts.groups[g.Id]; ok {
 		for k, v := range groups {
 			if v.Version == g.Version {
 				groups[k] = g
-				return true
+				return
 			}
 		}
 	}
 
-	return false
+	ts.groups[g.Id] = append(ts.groups[g.Id], g)
 }
