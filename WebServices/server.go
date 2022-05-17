@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"mime"
 	"net/http"
 
@@ -132,7 +131,6 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 					isExists = true
 					returnGroup = g
 					ts.groups[id] = removeGroup(v, i)
-					fmt.Println(v)
 					break
 				}
 			}
