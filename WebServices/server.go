@@ -42,7 +42,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		ts.configs[id] = append(ts.configs[id], rt.Configs[0])
 	}
 
-	renderJSON(w, rt)
+	renderJSON(w, rt.Configs[0])
 }
 
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
@@ -103,10 +103,10 @@ func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	version := mux.Vars(req)["version"]
 	var isExists bool = false
 	for _, v := range ts.configs {
-		for _, v1 := range v {
+		for i, v1 := range v {
 			if id == v1.Id && version == v1.Version {
 				returnConfig = v1
-				delete(ts.configs, id)
+				ts.configs[id] = removeConfig(v, i)
 				isExists = true
 				break
 			}
@@ -233,4 +233,8 @@ func (ts *Service) versionControl(g Group) {
 
 func removeGroup(groups []Group, i int) []Group {
 	return append(groups[:i], groups[i+1:]...)
+}
+
+func removeConfig(configs []Config, i int) []Config {
+	return append(configs[:i], configs[i+1:]...)
 }
