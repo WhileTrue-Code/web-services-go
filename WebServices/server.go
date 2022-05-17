@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"mime"
 	"net/http"
 
@@ -72,9 +73,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		group.Id = idgroup
 	}
 
-	if exists := ts.isVersionExist(group); !exists {
-		ts.groups[group.Id] = append(ts.groups[group.Id], group)
-	}
+	ts.versionControl(group)
 
 	renderJSON(w, group)
 }
@@ -126,13 +125,16 @@ func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Reque
 	version := mux.Vars(req)["version"]
 	returnGroup := Group{}
 	var isExists bool = false
-	for _, v := range ts.groups {
-		for _, v1 := range v {
-			if id == v1.Id && version == v1.Version {
-				isExists = true
-				returnGroup = v1
-				delete(ts.groups, id)
-				break
+	for keyId, v := range ts.groups {
+		if keyId == id {
+			for i, g := range v {
+				if g.Version == version {
+					isExists = true
+					returnGroup = g
+					ts.groups[id] = removeGroup(v, i)
+					fmt.Println(v)
+					break
+				}
 			}
 		}
 	}
@@ -218,15 +220,19 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 // }
 
-func (ts *Service) isVersionExist(g Group) bool {
+func (ts *Service) versionControl(g Group) {
 	if groups, ok := ts.groups[g.Id]; ok {
 		for k, v := range groups {
 			if v.Version == g.Version {
 				groups[k] = g
-				return true
+				return
 			}
 		}
 	}
 
-	return false
+	ts.groups[g.Id] = append(ts.groups[g.Id], g)
+}
+
+func removeGroup(groups []Group, i int) []Group {
+	return append(groups[:i], groups[i+1:]...)
 }
