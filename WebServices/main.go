@@ -21,12 +21,17 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	server := Service{
-		db: database.Database{},
+	dbase, err := database.New()
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// router.HandleFunc("/config/", server.createConfHandler).Methods("POST")
-	// router.HandleFunc("/group/", server.createConfGroupHandler).Methods("POST")
+	server := Service{
+		db: dbase,
+	}
+
+	router.HandleFunc("/config/", server.createConfHandler).Methods("POST")
+	router.HandleFunc("/group/", server.createConfGroupHandler).Methods("POST")
 	// router.HandleFunc("/configs/", server.getConfigsHandler).Methods("GET")
 	// router.HandleFunc("/groups/", server.getGroupsHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")

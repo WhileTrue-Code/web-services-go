@@ -108,7 +108,7 @@ func (db *Database) Group(group *Group) (*Group, error) {
 		}
 		label = label[:len(label)-1]
 		dbkey, _ := generateKey(group.Id, group.Version, label)
-
+		fmt.Println("OVDE JE DBKEY I ON GLASI : " + dbkey)
 		data, err := json.Marshal(v)
 		if err != nil {
 			return nil, err
@@ -127,16 +127,25 @@ func (ps *Database) GetGroup(id string, version string) (*Group, error) {
 	kv := ps.cli.KV()
 	cKey := constructKey(id, version, "1")
 	cKey = cKey[:len(cKey)-2]
-	pair, _, err := kv.Get(cKey, nil)
+	fmt.Println("OVDE JE CKEY I ON GLASI: " + cKey)
+	data, _, err := kv.List(cKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	group := &Group{}
-	err = json.Unmarshal(pair.Value, group)
-	if err != nil {
-		return nil, err
+	configs := []Config{}
+	for _, pair := range data {
+		config := &Config{}
+		err = json.Unmarshal(pair.Value, config)
+		if err != nil {
+			return nil, err
+		}
+		configs = append(configs, *config)
 	}
+	group := &Group{}
+	group.Id = id
+	group.Version = version
+	group.Configs = configs
 
 	return group, nil
 }
