@@ -28,7 +28,15 @@ func New() (*Database, error) {
 	}, nil
 }
 
-func (db *Database) Config(config *Config) (*Config, error) {
+
+func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
+	kv := db.cli.KV()
+	_, err := kv.Delete(constructKey(id, version), nil)
+  if err != nil {
+		return nil, err
+}
+
+  func (db *Database) Config(config *Config) (*Config, error) {
 	kv := db.cli.KV()
 
 	dbkey, id := generateKey(config.Id, config.Version)
@@ -61,9 +69,7 @@ func (db *Database) Group(group *Group) (*Group, error) {
 
 	g := &api.KVPair{Key: dbkey, Value: data}
 	_, err = kv.Put(g, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return group, nil
+  return group, nil
 }
+
+
