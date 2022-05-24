@@ -1,4 +1,4 @@
-package main
+package database
 
 type Config struct {
 	Id      string            `json: "id"`
