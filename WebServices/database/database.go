@@ -122,3 +122,21 @@ func (db *Database) Group(group *Group) (*Group, error) {
 
 	return group, nil
 }
+
+func (ps *Database) GetGroup(id string, version string) (*Group, error) {
+	kv := ps.cli.KV()
+	cKey := constructKey(id, version, "1")
+	cKey = cKey[:len(cKey)-2]
+	pair, _, err := kv.Get(cKey, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	group := &Group{}
+	err = json.Unmarshal(pair.Value, group)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
+}
