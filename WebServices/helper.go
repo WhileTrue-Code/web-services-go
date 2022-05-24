@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WebServices/database"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,20 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-func decodeBody(r io.Reader, i int) (Group, string, error) {
+func decodeBody(r io.Reader, i int) (database.Group, string, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var group Group
-	var cfg Config
+	var group database.Group
+	var cfg database.Config
 
 	if i == 0 {
 		if err := dec.Decode(&cfg); err != nil {
-			return Group{}, "", err
+			return database.Group{}, "", err
 		}
 	} else {
 		if err := dec.Decode(&group); err != nil {
-			return Group{}, "", err
+			return database.Group{}, "", err
 		}
 	}
 
@@ -32,7 +33,7 @@ func decodeBody(r io.Reader, i int) (Group, string, error) {
 	}
 
 	if len(group.Configs) < 1 {
-		return Group{}, "", fmt.Errorf("configuration list is empty")
+		return database.Group{}, "", fmt.Errorf("configuration list is empty")
 	}
 
 	return group, group.Version, nil
