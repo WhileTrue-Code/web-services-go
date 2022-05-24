@@ -13,13 +13,13 @@ const (
 	allConfigs = "configs"
 )
 
-func generateKey(version string, label string) (string, string) {
+func generateKey(groupId string, version string, label string) (string, string) {
 	id := uuid.New().String()
-	if label == "" {
+	if groupId == "" {
 		return fmt.Sprintf(config, id, version), id
 
 	} else {
-		return fmt.Sprintf(group, id, version, label), id
+		return fmt.Sprintf(group, groupId, version, label), groupId
 	}
 }
 
