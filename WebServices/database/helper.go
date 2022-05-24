@@ -7,15 +7,27 @@ import (
 )
 
 const (
-	posts = "posts/%s"
-	all   = "posts"
+	group      = "groups/%s/%s/%s"
+	config     = "configs/%s/%s"
+	allGroups  = "groups"
+	allConfigs = "configs"
 )
 
-func generateKey() (string, string) {
+func generateKey(version string, label string) (string, string) {
 	id := uuid.New().String()
-	return fmt.Sprintf(posts, id), id
+	if label == "" {
+		return fmt.Sprintf(config, id, version), id
+
+	} else {
+		return fmt.Sprintf(group, id, version, label), id
+	}
 }
 
-func constructKey(id string) string {
-	return fmt.Sprintf(posts, id)
+func constructKey(id string, version string, label string) string {
+	if label == "" {
+		return fmt.Sprintf(config, id, version)
+	} else {
+		return fmt.Sprintf(group, id, version, label)
+	}
+
 }

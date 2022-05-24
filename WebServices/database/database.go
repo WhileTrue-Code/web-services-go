@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -27,12 +28,48 @@ func New() (*Database, error) {
 	}, nil
 }
 
+
 func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
 	kv := db.cli.KV()
 	_, err := kv.Delete(constructKey(id, version), nil)
+  if err != nil {
+		return nil, err
+}
+
+  func (db *Database) Config(config *Config) (*Config, error) {
+	kv := db.cli.KV()
+
+	dbkey, id := generateKey(config.Id, config.Version)
+	config.Id = id
+
+	data, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]string{"Deleted": id}, nil
+	c := &api.KVPair{Key: dbkey, Value: data}
+	_, err = kv.Put(c, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
+
+func (db *Database) Group(group *Group) (*Group, error) {
+	kv := db.cli.KV()
+
+	dbkey, id := generateKey(group.Id, group.Version)
+	group.Id = id
+
+	data, err := json.Marshal(group)
+	if err != nil {
+		return nil, err
+	}
+
+	g := &api.KVPair{Key: dbkey, Value: data}
+	_, err = kv.Put(g, nil)
+  return group, nil
+}
+
+
