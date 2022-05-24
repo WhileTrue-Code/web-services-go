@@ -45,7 +45,7 @@ func (ps *Database) Get(id string, version string) (*Config, error) {
 
 func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
 	kv := db.cli.KV()
-	_, err := kv.Delete(constructKey(id, version), nil)
+	_, err := kv.Delete(constructKey(id, version, ""), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -82,5 +82,8 @@ func (db *Database) Group(group *Group) (*Group, error) {
 
 	g := &api.KVPair{Key: dbkey, Value: data}
 	_, err = kv.Put(g, nil)
+	if err != nil {
+		return nil, err
+	}
 	return group, nil
 }
