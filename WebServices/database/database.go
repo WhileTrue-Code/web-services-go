@@ -149,3 +149,23 @@ func (ps *Database) GetGroup(id string, version string) (*Group, error) {
 
 	return group, nil
 }
+
+func (ps *Database) GetAllConfigs() ([]*Config, error) {
+	kv := ps.cli.KV()
+	data, _, err := kv.List(allConfigs, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	posts := []*Config{}
+	for _, pair := range data {
+		post := &Config{}
+		err = json.Unmarshal(pair.Value, post)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}

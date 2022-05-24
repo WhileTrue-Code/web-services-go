@@ -72,16 +72,15 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 }
 
 // //test
-// func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
-// 	allTasks := []Config{}
-// 	for _, v := range ts.configs {
-// 		allTasks = append(allTasks, v...)
-// 	}
+func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
+	allTasks, error := ts.db.GetAllConfigs()
+	if error != nil {
+		renderJSON(w, "ERROR!")
+	}
+	renderJSON(w, allTasks)
+}
 
-// 	renderJSON(w, allTasks)
-// }
-
-// //test
+//test
 // func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
 // 	allTasks := []Group{}
 // 	for _, v := range ts.groups {
