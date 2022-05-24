@@ -34,9 +34,9 @@ func constructKey(id string, version string, label string) string {
 }
 
 func constructConfigKey(id string, version string) string {
-	return fmt.Sprint(config, id, version)
+	return fmt.Sprintf(config, id, version)
 }
 
 func constructGroupKey(id string, version string) string {
-	return fmt.Sprint(groupVersion, id, version)
+	return fmt.Sprintf(groupVersion, id, version)
 }
