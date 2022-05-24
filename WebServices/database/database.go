@@ -82,5 +82,8 @@ func (db *Database) Group(group *Group) (*Group, error) {
 
 	g := &api.KVPair{Key: dbkey, Value: data}
 	_, err = kv.Put(g, nil)
+	if err != nil {
+		return nil, err
+	}
 	return group, nil
 }
