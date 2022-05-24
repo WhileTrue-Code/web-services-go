@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -56,10 +58,14 @@ func (db *Database) DeleteConfig(id string, version string) (map[string]string, 
 func (db *Database) Config(config *Config) (*Config, error) {
 	kv := db.cli.KV()
 
-	dbkey, id := generateKey(config.Id, config.Version)
+	dbkey, id := generateKey(config.Id, config.Version, "")
 	config.Id = id
 
 	data, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+
 	c := &api.KVPair{Key: dbkey, Value: data}
 	_, err = kv.Put(c, nil)
 	if err != nil {
@@ -71,19 +77,39 @@ func (db *Database) Config(config *Config) (*Config, error) {
 
 func (db *Database) Group(group *Group) (*Group, error) {
 	kv := db.cli.KV()
+	group.Id = uuid.New().String()
 
-	dbkey, id := generateKey(group.Id, group.Version)
-	group.Id = id
+	for _, v := range group.Configs {
+		keys := make([]string, 0, len(v.Entries))
+		for k := range v.Entries {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
 
-	data, err := json.Marshal(group)
-	if err != nil {
-		return nil, err
+		for _, k := range keys {
+			fmt.Println(k, v.Entries[k])
+		}
+
 	}
 
-	g := &api.KVPair{Key: dbkey, Value: data}
-	_, err = kv.Put(g, nil)
-	if err != nil {
-		return nil, err
+	for _, v := range group.Configs {
+		label := ""
+		for k, v := range v.Entries {
+			label += k + ":" + v + ";"
+		}
+		label = label[:len(label)-1]
+		dbkey, _ := generateKey(group.Id, group.Version, label)
+
+		data, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		g := &api.KVPair{Key: dbkey, Value: data}
+		_, err = kv.Put(g, nil)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return group, nil
 }

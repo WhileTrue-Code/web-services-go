@@ -2,6 +2,8 @@ package main
 
 import (
 	"WebServices/database"
+	"errors"
+	"mime"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,72 +13,63 @@ type Service struct {
 	db database.Database
 }
 
-// TO-DO
-// func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
-// 	contentType := req.Header.Get("Content-Type")
-// 	mediatype, _, err := mime.ParseMediaType(contentType)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+//TO-DO
+func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if mediatype != "application/json" {
-// 		err := errors.New("expect application/json content-type")
-// 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-// 		return
-// 	}
+	if mediatype != "application/json" {
+		err := errors.New("expect application/json content-type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
 
-// 	rt, _, err := decodeBody(req.Body, 0)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	rt, _, err := decodeBody(req.Body, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if rt.Configs[0].Id == "" {
-// 		id := createId()
-// 		rt.Configs[0].Id = id
-// 		ts.configs[id] = append(ts.configs[id], rt.Configs[0])
-// 	} else {
-// 		id := rt.Configs[0].Id
-// 		ts.configs[id] = append(ts.configs[id], rt.Configs[0])
-// 	}
+	conf, err := ts.db.Config(&rt.Configs[0])
+	if err != nil {
+		renderJSON(w, "error occured")
+	}
 
-// 	renderJSON(w, rt.Configs[0])
-// }
+	renderJSON(w, conf)
+}
 
-// func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
-// 	contentType := req.Header.Get("Content-Type")
-// 	mediatype, _, err := mime.ParseMediaType(contentType)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	if mediatype != "application/json" {
-// 		err := errors.New("expect application/json content-type")
-// 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-// 		return
-// 	}
+	if mediatype != "application/json" {
+		err := errors.New("expect application/json content-type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
 
-// 	rt, v, err := decodeBody(req.Body, 1)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	rt, v, err := decodeBody(req.Body, 1)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-// 	group := rt
-// 	group.Version = v
-// 	if rt.Id == "" {
-// 		idgroup := createId()
-// 		group.Id = idgroup
-// 	} else {
-// 		group.Id = rt.Id
-// 	}
+	rt.Version = v
+	group, err := ts.db.Group(&rt)
+	if err != nil {
+		renderJSON(w, "error occured")
+	}
 
-// 	ts.versionControl(group)
-
-// 	renderJSON(w, group)
-// }
+	renderJSON(w, group)
+}
 
 // //test
 // func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
