@@ -98,27 +98,16 @@ type Service struct {
 // 	renderJSON(w, allTasks)
 // }
 
-// func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
-// 	returnConfig := Config{}
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	var isExists bool = false
-// 	for _, v := range ts.configs {
-// 		for i, v1 := range v {
-// 			if id == v1.Id && version == v1.Version {
-// 				returnConfig = v1
-// 				ts.configs[id] = removeConfig(v, i)
-// 				isExists = true
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if !isExists {
-// 		renderJSON(w, "Config does not exist")
-// 	} else {
-// 		renderJSON(w, returnConfig)
-// 	}
-// }
+func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := ts.db.DeleteConfig(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	renderJSON(w, msg)
+}
 
 // func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
 // 	id := mux.Vars(req)["id"]
