@@ -10,7 +10,7 @@ import (
 )
 
 type Service struct {
-	db database.Database
+	db *database.Database
 }
 
 //TO-DO
