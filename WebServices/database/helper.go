@@ -7,10 +7,11 @@ import (
 )
 
 const (
-	group      = "groups/%s/%s/%s"
-	config     = "configs/%s/%s"
-	allGroups  = "groups"
-	allConfigs = "configs"
+	group        = "groups/%s/%s/%s"
+	groupVersion = "groups/%s/%s"
+	config       = "configs/%s/%s"
+	allGroups    = "groups"
+	allConfigs   = "configs"
 )
 
 func generateKey(version string, label string) (string, string) {
@@ -30,4 +31,12 @@ func constructKey(id string, version string, label string) string {
 		return fmt.Sprintf(group, id, version, label)
 	}
 
+}
+
+func constructConfigKey(id string, version string) string {
+	return fmt.Sprint(config, id, version)
+}
+
+func constructGroupKey(id string, version string) string {
+	return fmt.Sprint(groupVersion, id, version)
 }
