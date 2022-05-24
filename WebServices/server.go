@@ -102,30 +102,16 @@ func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(w, msg)
 }
 
-// func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	returnGroup := Group{}
-// 	var isExists bool = false
-// 	for keyId, v := range ts.groups {
-// 		if keyId == id {
-// 			for i, g := range v {
-// 				if g.Version == version {
-// 					isExists = true
-// 					returnGroup = g
-// 					ts.groups[id] = removeGroup(v, i)
-// 					break
-// 				}
-// 			}
-// 		}
-// 	}
-// 	if !isExists {
-// 		renderJSON(w, "Group does not exist")
-// 	} else {
-// 		renderJSON(w, returnGroup)
-// 	}
-
-// }
+func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := ts.db.DeleteConfigGroup(id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	renderJSON(w, msg)
+}
 
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	returnConfig := database.Config{}
