@@ -1,6 +1,7 @@
 package database
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -25,4 +26,21 @@ func New() (*Database, error) {
 	return &Database{
 		cli: client,
 	}, nil
+}
+
+func (ps *Database) Get(id string, version string) (*Config, error) {
+	kv := ps.cli.KV()
+
+	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Config{}
+	err = json.Unmarshal(pair.Value, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"WebServices/database"
 	"context"
 	"log"
 	"net/http"
@@ -20,9 +21,9 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	// server := Service{
-	// 	db: database.Database{}
-	// }
+	server := Service{
+		db: database.Database{},
+	}
 
 	// router.HandleFunc("/config/", server.createConfHandler).Methods("POST")
 	// router.HandleFunc("/group/", server.createConfGroupHandler).Methods("POST")
@@ -30,8 +31,8 @@ func main() {
 	// router.HandleFunc("/groups/", server.getGroupsHandler).Methods("GET")
 	// router.HandleFunc("/config/{id}/{version}/", server.delConfigHandler).Methods("DELETE")
 	// router.HandleFunc("/group/{id}/{version}/", server.delConfigGroupsHandler).Methods("DELETE")
-	// router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
-	// router.HandleFunc("/group/{id}/{version}/", server.viewGroupHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/", server.viewGroupHandler).Methods("GET")
 	// router.HandleFunc("/group/{id}/{version}/", server.updateConfigHandler).Methods("PUT")
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

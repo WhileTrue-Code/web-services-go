@@ -2,6 +2,9 @@ package main
 
 import (
 	"WebServices/database"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type Service struct {
@@ -142,48 +145,48 @@ type Service struct {
 
 // }
 
-// func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
-// 	returnConfig := Config{}
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	var isExists bool = false
-// 	for _, v := range ts.configs {
-// 		for _, v1 := range v {
-// 			if id == v1.Id && version == v1.Version {
-// 				returnConfig = v1
-// 				isExists = true
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if !isExists {
-// 		renderJSON(w, "Config does not exist")
-// 	} else {
-// 		renderJSON(w, returnConfig)
-// 	}
+func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
+	returnConfig := database.Config{}
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	var isExists bool = false
+	// for _, v := range db.Get(id) {
+	// 	for _, v1 := range v {
+	// 		if id == v1.Id && version == v1.Version {
+	// 			returnConfig = v1
+	// 			isExists = true
+	// 			break
+	// 		}
+	// 	}
+	// }
+	if !isExists {
+		renderJSON(w, "Config does not exist")
+	} else {
+		renderJSON(w, returnConfig)
+	}
 
-// }
+}
 
-// func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	returnGroup := Group{}
-// 	var isExists bool = false
-// 	for _, v := range ts.groups {
-// 		for _, v1 := range v {
-// 			if id == v1.Id && version == v1.Version {
-// 				isExists = true
-// 				returnGroup = v1
-// 				break
-// 			}
-// 		}
-// 	}
-// 	if !isExists {
-// 		renderJSON(w, "Group does not exist")
-// 	} else {
-// 		renderJSON(w, returnGroup)
-// 	}
-// }
+func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	returnGroup := Group{}
+	var isExists bool = false
+	for _, v := range ts.groups {
+		for _, v1 := range v {
+			if id == v1.Id && version == v1.Version {
+				isExists = true
+				returnGroup = v1
+				break
+			}
+		}
+	}
+	if !isExists {
+		renderJSON(w, "Group does not exist")
+	} else {
+		renderJSON(w, returnGroup)
+	}
+}
 
 // //TODO change..
 // func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
