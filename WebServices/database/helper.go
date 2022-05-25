@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	group        = "groups/%s/%s/%s"
+	group        = "groups/%s/%s/%s/"
 	groupVersion = "groups/%s/%s"
 	config       = "configs/%s/%s"
 	allGroups    = "groups"
