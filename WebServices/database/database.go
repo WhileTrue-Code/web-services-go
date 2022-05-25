@@ -89,23 +89,17 @@ func (db *Database) Group(group *Group) (*Group, error) {
 	group.Id = uuid.New().String()
 
 	for _, v := range group.Configs {
+		label := ""
 		keys := make([]string, 0, len(v.Entries))
-		for k := range v.Entries {
+		for k, _ := range v.Entries {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
 
 		for _, k := range keys {
-			fmt.Println(k, v.Entries[k])
+			label += k + ":" + v.Entries[k] + ";"
 		}
 
-	}
-
-	for _, v := range group.Configs {
-		label := ""
-		for k, v := range v.Entries {
-			label += k + ":" + v + ";"
-		}
 		label = label[:len(label)-1]
 		dbkey, _ := generateKey(group.Id, group.Version, label)
 		fmt.Println("OVDE JE DBKEY I ON GLASI : " + dbkey)
