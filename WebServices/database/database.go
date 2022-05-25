@@ -57,7 +57,7 @@ func (db *Database) DeleteConfig(id string, version string) (map[string]string, 
 
 func (db *Database) DeleteConfigGroup(id string, version string) (map[string]string, error) {
 	kv := db.cli.KV()
-	_, err := kv.Delete(constructGroupKey(id, version), nil)
+	_, err := kv.DeleteTree(constructGroupKey(id, version), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,9 @@ func (db *Database) Config(config *Config) (*Config, error) {
 
 func (db *Database) Group(group *Group) (*Group, error) {
 	kv := db.cli.KV()
-	group.Id = uuid.New().String()
-
+	if group.Id == "" {
+		group.Id = uuid.New().String()
+	}
 	for _, v := range group.Configs {
 		label := ""
 		keys := make([]string, 0, len(v.Entries))
