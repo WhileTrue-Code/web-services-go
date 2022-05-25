@@ -171,3 +171,20 @@ func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Reques
 	}
 	renderJSON(w, returnConfigs)
 }
+
+func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	rt, _, err := decodeBody(req.Body, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	group, err := ts.db.AddConfigsToGroup(id, version, rt.Configs[0])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	renderJSON(w, group)
+}

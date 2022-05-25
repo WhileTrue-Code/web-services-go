@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -34,6 +35,9 @@ func (ps *Database) Get(id string, version string) (*Config, error) {
 	kv := ps.cli.KV()
 
 	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	config := &Config{}
 	err = json.Unmarshal(pair.Value, config)
@@ -183,4 +187,33 @@ func (ps *Database) GetConfigsFromGroup(id string, version string, label string)
 	}
 
 	return configs, nil
+}
+
+func (ps *Database) AddConfigsToGroup(id string, version string, config Config) (*Group, error) {
+
+	group, error := ps.GetGroup(id, version)
+	if error != nil {
+		return nil, error
+	}
+	if len(group.Configs) < 1 {
+		return nil, errors.New("Group doesn't exists!")
+	}
+
+	groupW := Group{}
+	groupW.Id = id
+	groupW.Version = version
+	groupW.Configs = append(group.Configs, config)
+
+	_, err := ps.Group(&groupW)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ret, err := ps.GetGroup(id, version)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
 }

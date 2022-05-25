@@ -39,7 +39,7 @@ func main() {
 	router.HandleFunc("/config/{id}/{version}/", server.viewConfigHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", server.viewGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/{label}/", server.viewGroupLabelHandler).Methods("GET")
-	// router.HandleFunc("/group/{id}/{version}/", server.updateConfigHandler).Methods("PUT")
+	router.HandleFunc("/group/{id}/{version}/", server.updateConfigHandler).Methods("PUT")
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
