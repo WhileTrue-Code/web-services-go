@@ -121,9 +121,13 @@ func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
 	returnConfig, error := ts.db.Get(id, version)
-
 	if error != nil {
 		renderJSON(w, "Error!")
+		return
+	}
+	if returnConfig.Id == "" {
+		renderJSON(w, "Error!")
+		return
 	}
 	renderJSON(w, returnConfig)
 }
@@ -137,7 +141,14 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 	if error != nil {
 		renderJSON(w, "Error!")
+		return
 	}
+
+	if len(returnGroup.Configs) == 0 {
+		renderJSON(w, "Group doesn't exists!")
+		return
+	}
+
 	renderJSON(w, returnGroup)
 }
 
@@ -160,64 +171,3 @@ func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Reques
 	}
 	renderJSON(w, returnConfigs)
 }
-
-// //TODO change..
-// func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	groupList := ts.groups[id]
-// 	var group Group
-// 	var index int
-
-// 	isExist := false
-// 	for i, v := range groupList {
-// 		if v.Id == id && v.Version == version {
-// 			isExist = true
-// 			group = v
-// 			index = i
-// 			break
-// 		}
-// 	}
-
-// 	if len(groupList) == 0 {
-// 		renderJSON(w, "Ne mozete dodati novu konfiguraciju!")
-// 	} else {
-// 		rt, _, err := decodeBody(req.Body, 0)
-// 		if err != nil {
-// 			http.Error(w, err.Error(), http.StatusBadRequest)
-// 			return
-// 		}
-// 		if isExist {
-// 			group.Configs = append(group.Configs, rt.Configs[0])
-// 			ts.groups[id] = append(ts.groups[id], group)
-// 			ts.groups[id] = removeGroup(ts.groups[id], index)
-// 			renderJSON(w, ts.groups[id])
-
-// 		} else {
-// 			renderJSON(w, "Group does not exist")
-// 		}
-
-// 	}
-
-// }
-
-// func (ts *Service) versionControl(g Group) {
-// 	if groups, ok := ts.groups[g.Id]; ok {
-// 		for k, v := range groups {
-// 			if v.Version == g.Version {
-// 				groups[k] = g
-// 				return
-// 			}
-// 		}
-// 	}
-
-// 	ts.groups[g.Id] = append(ts.groups[g.Id], g)
-// }
-
-// func removeGroup(groups []Group, i int) []Group {
-// 	return append(groups[:i], groups[i+1:]...)
-// }
-
-// func removeConfig(configs []Config, i int) []Config {
-// 	return append(configs[:i], configs[i+1:]...)
-// }
