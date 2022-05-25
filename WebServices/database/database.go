@@ -180,7 +180,7 @@ func (ps *Database) GetConfigsFromGroup(id string, version string, label string)
 	configs := []*Config{}
 	for _, pair := range data {
 		config := &Config{}
-		err = json.Unmarshal(pair.Value, group)
+		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
 			return nil, err
 		}
