@@ -5,6 +5,8 @@ import (
 	"errors"
 	"mime"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -81,14 +83,16 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 //test
-// func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
-// 	allTasks := []Group{}
-// 	for _, v := range ts.groups {
-// 		allTasks = append(allTasks, v...)
-// 	}
-
-// 	renderJSON(w, allTasks)
-// }
+func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	label := mux.Vars(req)["label"]
+	allTasks, error := ts.db.GetConfigsFromGroup(id, version, label)
+	if error != nil {
+		renderJSON(w, "ERROR!")
+	}
+	renderJSON(w, allTasks)
+}
 
 func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
@@ -128,12 +132,33 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
+
 	returnGroup, error := ts.db.GetGroup(id, version)
 
 	if error != nil {
 		renderJSON(w, "Error!")
 	}
 	renderJSON(w, returnGroup)
+}
+
+func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Request) {
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	label := mux.Vars(req)["label"]
+	list := strings.Split(label, ";")
+	sort.Strings(list)
+	sortedLabel := ""
+	for _, v := range list {
+		sortedLabel += v + ";"
+	}
+	sortedLabel = sortedLabel[:len(sortedLabel)-1]
+	returnConfigs, error := ts.db.GetConfigsFromGroup(id, version, sortedLabel)
+
+	if error != nil {
+		renderJSON(w, "Error!")
+	}
+	renderJSON(w, returnConfigs)
 }
 
 // //TODO change..
