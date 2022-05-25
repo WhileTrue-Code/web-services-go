@@ -121,7 +121,7 @@ func (db *Database) Group(group *Group) (*Group, error) {
 func (ps *Database) GetGroup(id string, version string) (*Group, error) {
 	kv := ps.cli.KV()
 	cKey := constructKey(id, version, "1")
-	cKey = cKey[:len(cKey)-2]
+	cKey = cKey[:len(cKey)-3]
 	fmt.Println("OVDE JE CKEY I ON GLASI: " + cKey)
 	data, _, err := kv.List(cKey, nil)
 	if err != nil {
