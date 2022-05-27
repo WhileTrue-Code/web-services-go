@@ -35,6 +35,10 @@ func (ps *Database) Get(id string, version string) (*Config, error) {
 
 	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
 
+	if err != nil {
+		return nil, err
+	}
+
 	config := &Config{}
 	err = json.Unmarshal(pair.Value, config)
 
@@ -62,6 +66,42 @@ func (db *Database) DeleteConfigGroup(id string, version string) (map[string]str
 		return nil, err
 	}
 	return map[string]string{"Deleted": id}, nil
+}
+
+func (db *Database) IdempotencyKey(ideKey *string) (*string, error) {
+	kv := db.cli.KV()
+
+	dbIdeKey := constructKey(*ideKey, "", "")
+	fmt.Println("ISKONSTRUISANI DBIDEKEY IZGLEDA: " + dbIdeKey)
+
+	byteIdeKey := []byte(*ideKey)
+
+	iKey := &api.KVPair{Key: dbIdeKey, Value: byteIdeKey}
+	_, err := kv.Put(iKey, nil)
+	if err != nil {
+		return nil, err
+	}
+	return ideKey, nil
+
+}
+
+func (db *Database) GetIdempotencyKey(ideKey *string) (*string, error) {
+	kv := db.cli.KV()
+
+	pair, _, err := kv.Get(constructKey(*ideKey, "", ""), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if pair == nil {
+		return nil, nil
+	}
+
+	iK := string(pair.Value)
+
+	return &iK, nil
+
 }
 
 func (db *Database) Config(config *Config) (*Config, error) {
@@ -103,12 +143,13 @@ func (db *Database) Group(group *Group) (*Group, error) {
 
 		label = label[:len(label)-1]
 		dbkey, _ := generateKey(group.Id, group.Version, label)
-		fmt.Println("OVDE JE DBKEY I ON GLASI : " + dbkey)
 		data, err := json.Marshal(v)
 		if err != nil {
 			return nil, err
 		}
-		g := &api.KVPair{Key: dbkey, Value: data}
+		databaseKey := dbkey + uuid.New().String()
+		fmt.Println("OVDE JE DBKEY I ON GLASI : " + databaseKey)
+		g := &api.KVPair{Key: databaseKey, Value: data}
 		_, err = kv.Put(g, nil)
 		if err != nil {
 			return nil, err
