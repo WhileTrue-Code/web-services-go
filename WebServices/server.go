@@ -18,6 +18,7 @@ type Service struct {
 //TO-DO
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
+	ideKeyID := req.Header.Get("Idempotency-key")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -36,16 +37,34 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	conf, err := ts.db.Config(&rt.Configs[0])
+	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
 	if err != nil {
-		renderJSON(w, "error occured")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	renderJSON(w, conf)
+	if ideKey == nil {
+		_, err := ts.db.IdempotencyKey(&ideKeyID)
+		if err != nil {
+			renderJSON(w, "error occured")
+			return
+		}
+		conf, err := ts.db.Config(&rt.Configs[0])
+		if err != nil {
+			renderJSON(w, "error occured")
+			return
+		}
+
+		renderJSON(w, conf)
+	} else {
+		renderJSON(w, "Saved.")
+	}
+
 }
 
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
+	ideKeyID := req.Header.Get("Idempotency-key")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,13 +83,30 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rt.Version = v
-	group, err := ts.db.Group(&rt)
+	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
 	if err != nil {
-		renderJSON(w, "error occured")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	renderJSON(w, group)
+	if ideKey == nil {
+		_, err := ts.db.IdempotencyKey(&ideKeyID)
+		if err != nil {
+			renderJSON(w, "error occured")
+			return
+		}
+
+		rt.Version = v
+		group, err := ts.db.Group(&rt)
+		if err != nil {
+			renderJSON(w, "error occured")
+		}
+
+		renderJSON(w, group)
+	} else {
+		renderJSON(w, "Saved.")
+	}
+
 }
 
 // //test
