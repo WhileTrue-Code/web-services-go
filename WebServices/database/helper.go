@@ -29,10 +29,10 @@ func generateKey(newId string, version string, label string) (string, string) {
 }
 
 func constructKey(id string, version string, label string) string {
-	if label == "" {
-		return fmt.Sprintf(config, id, version)
-	} else if version == "" && label == "" {
+	if version == "" && label == "" {
 		return fmt.Sprintf(idempotencyKey, id)
+	} else if label == "" {
+		return fmt.Sprintf(config, id, version)
 	} else {
 		return fmt.Sprintf(group, id, version, label)
 	}
