@@ -14,7 +14,7 @@ var (
 	// The Prometheus metric that will be exposed.
 	httpHits = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "total_hits",
+			Name: "my_app_http_hit_total",
 			Help: "Total number of http hits.",
 		},
 	)
