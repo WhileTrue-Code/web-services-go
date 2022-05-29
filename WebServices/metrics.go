@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,10 +9,8 @@ import (
 )
 
 var (
-	// Initial count.
 	currentCount = 0
 
-	// The Prometheus metric that will be exposed.
 	httpHits = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Name: "my_app_http_hit_total",
@@ -84,16 +81,13 @@ var (
 		},
 	)
 
-	// Add all metrics that will be resisted
 	metricsList = []prometheus.Collector{httpHits, httpGetConfigHits, httpPostConfigHits, httpDeleteConfigHits,
 		httpGetConfigsHits, httpGetGroupsHits, httpPostGroupHits, httpDeleteGroupHits, httpPutGroupHits, httpGetConfigFromGroupHits}
 
-	// Prometheus Registry to register metrics.
 	prometheusRegistry = prometheus.NewRegistry()
 )
 
 func init() {
-	// Register metrics that will be exposed.
 	prometheusRegistry.MustRegister(metricsList...)
 }
 
@@ -119,22 +113,19 @@ func count(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter,
 			}
 		}
 		if URL == "group" {
-			fmt.Println(strings.Split(r.URL.String(), "/"))
-			if len(strings.Split(r.URL.String(), "/")) > 3 && r.Method == "GET" {
+			if r.Method == "GET" && strings.Split(r.URL.String(), "/")[4] == "" {
+				httpGetGroupsHits.Inc()
+			} else if r.Method == "POST" {
+				httpPostGroupHits.Inc()
+			} else if r.Method == "DELETE" {
+				httpDeleteGroupHits.Inc()
+			} else if r.Method == "PUT" {
+				httpPutGroupHits.Inc()
+			} else if r.Method == "GET" && strings.Split(r.URL.String(), "/")[4] != "" {
 				httpGetConfigFromGroupHits.Inc()
-			} else {
-				if r.Method == "GET" {
-					httpGetGroupsHits.Inc()
-				} else if r.Method == "POST" {
-					httpPostGroupHits.Inc()
-				} else if r.Method == "DELETE" {
-					httpDeleteGroupHits.Inc()
-				} else if r.Method == "PUT" {
-					httpPutGroupHits.Inc()
-				}
 			}
 		}
 		httpHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
