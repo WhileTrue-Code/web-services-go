@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -48,8 +49,44 @@ var (
 		},
 	)
 
+	httpGetGroupsHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "getGroups_hits",
+			Help: "getGroups_hits",
+		},
+	)
+
+	httpPostGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "postGroup_hits",
+			Help: "postGroup_hits",
+		},
+	)
+
+	httpDeleteGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "deleteGroup_hits",
+			Help: "deleteGroup_hits",
+		},
+	)
+
+	httpPutGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "putGroup_hits",
+			Help: "putGroup_hits",
+		},
+	)
+
+	httpGetConfigFromGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "getConfigFromGroup_hits",
+			Help: "getConfigFromGroup_hits",
+		},
+	)
+
 	// Add all metrics that will be resisted
-	metricsList = []prometheus.Collector{httpHits, httpGetConfigHits, httpPostConfigHits, httpDeleteConfigHits, httpGetConfigsHits}
+	metricsList = []prometheus.Collector{httpHits, httpGetConfigHits, httpPostConfigHits, httpDeleteConfigHits,
+		httpGetConfigsHits, httpGetGroupsHits, httpPostGroupHits, httpDeleteGroupHits, httpPutGroupHits, httpGetConfigFromGroupHits}
 
 	// Prometheus Registry to register metrics.
 	prometheusRegistry = prometheus.NewRegistry()
@@ -79,6 +116,22 @@ func count(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter,
 		if URL == "configs" {
 			if r.Method == "GET" {
 				httpGetConfigsHits.Inc()
+			}
+		}
+		if URL == "group" {
+			fmt.Println(strings.Split(r.URL.String(), "/"))
+			if len(strings.Split(r.URL.String(), "/")) > 3 && r.Method == "GET" {
+				httpGetConfigFromGroupHits.Inc()
+			} else {
+				if r.Method == "GET" {
+					httpGetGroupsHits.Inc()
+				} else if r.Method == "POST" {
+					httpPostGroupHits.Inc()
+				} else if r.Method == "DELETE" {
+					httpDeleteGroupHits.Inc()
+				} else if r.Method == "PUT" {
+					httpPutGroupHits.Inc()
+				}
 			}
 		}
 		httpHits.Inc()
