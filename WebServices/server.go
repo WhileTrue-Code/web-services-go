@@ -114,6 +114,7 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 	allTasks, error := ts.db.GetAllConfigs()
 	if error != nil {
 		renderJSON(w, "ERROR!")
+		return
 	}
 	renderJSON(w, allTasks)
 }
