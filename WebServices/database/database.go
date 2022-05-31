@@ -196,17 +196,17 @@ func (ps *Database) GetAllConfigs() ([]*Config, error) {
 		return nil, err
 	}
 
-	posts := []*Config{}
+	configs := []*Config{}
 	for _, pair := range data {
-		post := &Config{}
-		err = json.Unmarshal(pair.Value, post)
+		config := &Config{}
+		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, post)
+		configs = append(configs, config)
 	}
 
-	return posts, nil
+	return configs, nil
 }
 
 func (ps *Database) GetConfigsFromGroup(id string, version string, label string) ([]*Config, error) {
