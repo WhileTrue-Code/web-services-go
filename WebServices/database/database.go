@@ -130,7 +130,10 @@ func (db *Database) Config(config *Config) (*Config, error) {
 
 func (db *Database) Group(group *Group) (*Group, error) {
 	kv := db.cli.KV()
-	group.Id = uuid.New().String()
+
+	if group.Id == "" {
+		group.Id = uuid.New().String()
+	}
 
 	for _, v := range group.Configs {
 		label := ""
@@ -143,8 +146,8 @@ func (db *Database) Group(group *Group) (*Group, error) {
 		for _, k := range keys {
 			label += k + ":" + v.Entries[k] + ";"
 		}
-
 		label = label[:len(label)-1]
+
 		dbkey, _ := generateKey(group.Id, group.Version, label)
 		data, err := json.Marshal(v)
 		if err != nil {
@@ -242,7 +245,7 @@ func (ps *Database) AddConfigsToGroup(id string, version string, config Config) 
 	groupW := Group{}
 	groupW.Id = id
 	groupW.Version = version
-	groupW.Configs = append(group.Configs, config)
+	groupW.Configs = append(groupW.Configs, config)
 
 	_, err := ps.Group(&groupW)
 
