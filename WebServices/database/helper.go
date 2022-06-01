@@ -33,10 +33,10 @@ func constructKey(id string, version string, label string) string {
 		return fmt.Sprintf(idempotencyKey, id)
 	} else if label == "" {
 		return fmt.Sprintf(config, id, version)
-	} else {
+	} else if label != "" {
 		return fmt.Sprintf(group, id, version, label)
 	}
-
+	return ""
 }
 
 func constructConfigKey(id string, version string) string {
