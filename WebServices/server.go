@@ -21,7 +21,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	ideKeyID := req.Header.Get("Idempotency-key")
 
 	if ideKeyID == "" {
-		renderJSON(w, "ideKey not represented")
+		renderJSON(w, "Idempotency-key not represented")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 	ideKeyID := req.Header.Get("Idempotency-key")
 
 	if ideKeyID == "" {
-		renderJSON(w, "ideKey not represented")
+		renderJSON(w, "Idempotency-key not represented")
 		return
 	}
 
