@@ -130,7 +130,10 @@ func (db *Database) Config(config *Config) (*Config, error) {
 
 func (db *Database) Group(group *Group) (*Group, error) {
 	kv := db.cli.KV()
-	group.Id = uuid.New().String()
+
+	if group.Id == "" {
+		group.Id = uuid.New().String()
+	}
 
 	for _, v := range group.Configs {
 		label := ""

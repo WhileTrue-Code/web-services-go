@@ -19,6 +19,12 @@ type Service struct {
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	ideKeyID := req.Header.Get("Idempotency-key")
+
+	if ideKeyID == "" {
+		renderJSON(w, "ideKey not represented")
+		return
+	}
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -65,6 +71,12 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	ideKeyID := req.Header.Get("Idempotency-key")
+
+	if ideKeyID == "" {
+		renderJSON(w, "ideKey not represented")
+		return
+	}
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
