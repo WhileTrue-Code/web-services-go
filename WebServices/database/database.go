@@ -65,7 +65,7 @@ func (db *Database) DeleteConfig(id string, version string) (map[string]string, 
 
 func (db *Database) DeleteConfigGroup(id string, version string) (map[string]string, error) {
 	kv := db.cli.KV()
-	_, err := kv.Delete(constructGroupKey(id, version), nil)
+	_, err := kv.DeleteTree(constructGroupKey(id, version), nil)
 	if err != nil {
 		return nil, err
 	}
