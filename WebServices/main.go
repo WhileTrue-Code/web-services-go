@@ -34,7 +34,7 @@ func main() {
 	router.HandleFunc("/config/{id}/{version}/", count(server.viewConfigHandler)).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", count(server.viewGroupHandler)).Methods("GET")
 	// router.HandleFunc("/group/{id}/{version}/{label}/", count(server.viewGroupLabelHandler)).Methods("GET")
-	// router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
+	router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
 	router.Path("/metrics").Handler(metricsHandler())
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

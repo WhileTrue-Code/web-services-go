@@ -4,6 +4,7 @@ import (
 	"WebServices/tracer"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -327,31 +328,41 @@ func (ps *Database) GetConfigsFromGroup(id string, version string, label string)
 	return configs, nil
 }
 
-// func (ps *Database) AddConfigsToGroup(id string, version string, config Config) (*Group, error) {
+func (ps *Database) AddConfigsToGroup(ctx context.Context, id string, version string, config Config) (*Group, error) {
+	span := tracer.StartSpanFromContext(ctx, "putConfigsToGroupFromDatabase")
+	defer span.Finish()
 
-// 	group, error := ps.GetGroup(id, version)
-// 	if error != nil {
-// 		return nil, error
-// 	}
-// 	if len(group.Configs) < 1 {
-// 		return nil, errors.New("Group doesn't exists!")
-// 	}
+	ctxBase := tracer.ContextWithSpan(ctx, span)
 
-// 	groupW := Group{}
-// 	groupW.Id = id
-// 	groupW.Version = version
-// 	groupW.Configs = append(groupW.Configs, config)
+	group, error := ps.GetGroup(ctx, id, version)
+	if error != nil {
+		tracer.LogError(span, error)
+		return nil, error
+	}
+	if len(group.Configs) < 1 {
+		return nil, errors.New("Group doesn't exists!")
+	}
 
-// 	_, err := ps.Group(&groupW)
+	groupW := Group{}
+	groupW.Id = id
+	groupW.Version = version
+	groupW.Configs = append(groupW.Configs, config)
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	_, err := ps.Group(ctx, &groupW)
 
-// 	ret, err := ps.GetGroup(id, version)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	spanBase := tracer.StartSpanFromContext(ctxBase, "Put config into group - database")
+	defer spanBase.Finish()
 
-// 	return ret, nil
-// }
+	if err != nil {
+		tracer.LogError(spanBase, err)
+		return nil, err
+	}
+
+	ret, err := ps.GetGroup(ctx, id, version)
+	if err != nil {
+		tracer.LogError(spanBase, err)
+		return nil, err
+	}
+
+	return ret, nil
+}
