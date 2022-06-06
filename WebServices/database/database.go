@@ -61,24 +61,59 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 	return config, nil
 }
 
-// func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
-// 	kv := db.cli.KV()
-// 	_, err := kv.Delete(constructConfigKey(id, version), nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (db *Database) DeleteConfig(ctx context.Context, id string, version string) (map[string]string, error) {
+	span := tracer.StartSpanFromContext(ctx, "deleteConfigFromDatabase")
+	defer span.Finish()
 
-// 	return map[string]string{"Deleted": id}, nil
-// }
+	ctxBase := tracer.ContextWithSpan(ctx, span)
 
-// func (db *Database) DeleteConfigGroup(id string, version string) (map[string]string, error) {
-// 	kv := db.cli.KV()
-// 	_, err := kv.DeleteTree(constructGroupKey(id, version), nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return map[string]string{"Deleted": id}, nil
-// }
+	kv := db.cli.KV()
+
+	config, err1 := db.Get(ctx, id, version)
+	if err1 != nil {
+		tracer.LogError(span, fmt.Errorf("Config does not exist!"))
+		return nil, err1
+	}
+
+	_, err := kv.Delete(constructConfigKey(config.Id, config.Version), nil)
+
+	spanBase := tracer.StartSpanFromContext(ctxBase, "Delete one config from database")
+	defer spanBase.Finish()
+
+	if err != nil {
+		tracer.LogError(spanBase, err)
+		return nil, err
+	}
+
+	tracer.LogString("database_deleteConfig", "Successfully deleted from database")
+
+	return map[string]string{"Deleted": id}, nil
+}
+
+func (db *Database) DeleteConfigGroup(ctx context.Context, id string, version string) (map[string]string, error) {
+	span := tracer.StartSpanFromContext(ctx, "deleteGroupFromDatabase")
+	defer span.Finish()
+
+	ctxBase := tracer.ContextWithSpan(ctx, span)
+	group, err1 := db.GetGroup(ctx, id, version)
+	if err1 != nil {
+		tracer.LogError(span, fmt.Errorf("Group does not exist!"))
+		return nil, err1
+	}
+
+	kv := db.cli.KV()
+
+	_, err := kv.DeleteTree(constructGroupKey(group.Id, group.Version), nil)
+
+	spanBase := tracer.StartSpanFromContext(ctxBase, "Delete one group from database")
+	defer spanBase.Finish()
+
+	if err != nil {
+		tracer.LogError(spanBase, err)
+		return nil, err
+	}
+	return map[string]string{"Deleted": id}, nil
+}
 
 func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string, error) {
 	span := tracer.StartSpanFromContext(ctx, "DB create idempotency-key")
