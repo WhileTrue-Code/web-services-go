@@ -21,8 +21,9 @@ func decodeBody(ctx context.Context, r io.Reader, i int) (database.Group, string
 
 	var group database.Group
 	var cfg database.Config
-
+	isCfg := false
 	if i == 0 {
+		isCfg = true
 		if err := dec.Decode(&cfg); err != nil {
 			tracer.LogError(span, err)
 			return database.Group{}, "", err
@@ -34,11 +35,12 @@ func decodeBody(ctx context.Context, r io.Reader, i int) (database.Group, string
 		}
 	}
 
-	if len(group.Configs) == 0 {
+	if len(group.Configs) == 0 && isCfg {
 		group.Configs = append(group.Configs, cfg)
 		return group, "", nil
 	}
 
+	fmt.Println(len(group.Configs))
 	if len(group.Configs) < 1 {
 		tracer.LogError(span, fmt.Errorf("configuration list is empty"))
 		return database.Group{}, "", fmt.Errorf("configuration list is empty")

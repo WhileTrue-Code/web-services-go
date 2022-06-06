@@ -228,7 +228,9 @@ func (ps *Database) GetGroup(ctx context.Context, id string, version string) (*G
 	group.Version = version
 	group.Configs = configs
 
-	tracer.LogString("database_getConfigs", "Successful reading from database")
+	span.LogFields(
+		tracer.LogString("database_getConfigs", "Successful reading from database"),
+	)
 	return group, nil
 }
 
@@ -241,7 +243,7 @@ func (ps *Database) GetAllConfigs(ctx context.Context) ([]*Config, error) {
 	kv := ps.cli.KV()
 	data, _, err := kv.List(allConfigs, nil)
 
-	spanBase := tracer.StartSpanFromContext(ctxBase, "Get configs from base")
+	spanBase := tracer.StartSpanFromContext(ctxBase, "List configs from database")
 	defer spanBase.Finish()
 
 	if err != nil {
@@ -259,7 +261,10 @@ func (ps *Database) GetAllConfigs(ctx context.Context) ([]*Config, error) {
 		}
 		configs = append(configs, config)
 	}
-	tracer.LogString("database_getConfigs", "Successful reading from database")
+	span.LogFields(
+		tracer.LogString("database_getConfigs", "Successful reading from database"),
+	)
+
 	return configs, nil
 }
 

@@ -78,7 +78,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
-	span := tracer.StartSpanFromRequest("createConfigHandler", ts.tracer, req)
+	span := tracer.StartSpanFromRequest("createConfigGroupHandler", ts.tracer, req)
 	defer span.Finish()
 
 	span.LogFields(
@@ -212,7 +212,7 @@ func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
-	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
+	span := tracer.StartSpanFromRequest("getGroupHandler", ts.tracer, req)
 	defer span.Finish()
 
 	span.LogFields(
@@ -233,6 +233,7 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 	if len(returnGroup.Configs) == 0 {
 		renderJSON(ctx, w, "Group doesn't exists!")
+		tracer.LogError(span, fmt.Errorf("Group doesn't exists!"))
 		return
 	}
 

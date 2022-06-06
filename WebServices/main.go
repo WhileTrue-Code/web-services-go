@@ -1,7 +1,6 @@
 package main
 
 import (
-	"WebServices/database"
 	"context"
 	"log"
 	"net/http"
@@ -21,17 +20,14 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	dbase, err := database.New()
+	server, err := NewConfigServer()
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 
-	server := Service{
-		db: dbase,
-	}
-
-	// router.HandleFunc("/config/", count(server.createConfHandler)).Methods("POST")
-	// router.HandleFunc("/group/", count(server.createConfGroupHandler)).Methods("POST")
+	router.HandleFunc("/config/", count(server.createConfHandler)).Methods("POST")
+	router.HandleFunc("/group/", count(server.createConfGroupHandler)).Methods("POST")
 	router.HandleFunc("/configs/", count(server.getConfigsHandler)).Methods("GET")
 	// router.HandleFunc("/config/{id}/{version}/", count(server.delConfigHandler)).Methods("DELETE")
 	// router.HandleFunc("/group/{id}/{version}/", count(server.delConfigGroupsHandler)).Methods("DELETE")
