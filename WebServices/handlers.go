@@ -1,14 +1,15 @@
 package main
 
 import (
-
 	"WebServices/tracer"
 	"context"
+	"errors"
 	"fmt"
+	"mime"
 	"net/http"
+
 	"github.com/gorilla/mux"
 )
-
 
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	span := tracer.StartSpanFromRequest("createConfigHandler", ts.tracer, req)
@@ -48,7 +49,7 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
+	ideKey, err := ts.db.GetIdempotencyKey(ctx, &ideKeyID)
 	if err != nil {
 		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -56,13 +57,13 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if ideKey == nil {
-		_, err := ts.db.IdempotencyKey(&ideKeyID)
+		_, err := ts.db.IdempotencyKey(ctx, &ideKeyID)
 		if err != nil {
 			tracer.LogError(span, err)
 			renderJSON(ctx, w, "error occured")
 			return
 		}
-		conf, err := ts.db.Config(&rt.Configs[0])
+		conf, err := ts.db.Config(ctx, &rt.Configs[0])
 		if err != nil {
 			tracer.LogError(span, err)
 			renderJSON(ctx, w, "error occured")
@@ -108,14 +109,14 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	rt, v, err := decodeBody(req.Body, 1)
+	rt, v, err := decodeBody(ctx, req.Body, 1)
 	if err != nil {
 		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
+	ideKey, err := ts.db.GetIdempotencyKey(ctx, &ideKeyID)
 	if err != nil {
 		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -123,7 +124,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 	}
 
 	if ideKey == nil {
-		_, err := ts.db.IdempotencyKey(&ideKeyID)
+		_, err := ts.db.IdempotencyKey(ctx, &ideKeyID)
 		if err != nil {
 			tracer.LogError(span, err)
 			renderJSON(ctx, w, "error occured")
@@ -131,7 +132,7 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 		}
 
 		rt.Version = v
-		group, err := ts.db.Group(&rt)
+		group, err := ts.db.Group(ctx, &rt)
 		if err != nil {
 			tracer.LogError(span, err)
 			renderJSON(ctx, w, "error occured")
@@ -145,17 +146,6 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 
 }
 
-// //test
-func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks, error := ts.db.GetAllConfigs()
-	if error != nil {
-		renderJSON(w, "ERROR!")
-		return
-	}
-	renderJSON(w, allTasks)
-}
-
-// //test
 func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
 	defer span.Finish()
