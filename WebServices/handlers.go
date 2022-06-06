@@ -1,19 +1,15 @@
 package main
 
 import (
-	tracer "WebServices/tracer"
-	"context"
-	"errors"
-	"fmt"
-	"mime"
-	"net/http"
-	"sort"
-	"strings"
 
+	"WebServices/tracer"
+	"context"
+	"fmt"
+	"net/http"
 	"github.com/gorilla/mux"
 )
 
-//TO-DO
+
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	span := tracer.StartSpanFromRequest("createConfigHandler", ts.tracer, req)
 	defer span.Finish()
@@ -159,109 +155,133 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(w, allTasks)
 }
 
-//test
-func (ts *Service) getGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	label := mux.Vars(req)["label"]
-	allTasks, error := ts.db.GetConfigsFromGroup(id, version, label)
+// //test
+func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(tracer.LogString("handler", fmt.Sprintf("Starting: handling get configs at %s\n", req.URL.Path)))
+
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+	allTasks, error := ts.db.GetAllConfigs(ctx)
+
 	if error != nil {
-		renderJSON(w, "ERROR!")
-	}
-	renderJSON(w, allTasks)
-}
-
-func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	msg, err := ts.db.DeleteConfig(id, version)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		renderJSON(ctx, w, "ERROR!")
 		return
 	}
-	renderJSON(w, msg)
+	renderJSON(ctx, w, allTasks)
 }
 
-func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	msg, err := ts.db.DeleteConfigGroup(id, version)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	renderJSON(w, msg)
-}
+// func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+// 	id := mux.Vars(req)["id"]
+// 	version := mux.Vars(req)["version"]
+// 	msg, err := ts.db.DeleteConfig(id, version)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+// 	renderJSON(w, msg)
+// }
+
+// func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
+// 	id := mux.Vars(req)["id"]
+// 	version := mux.Vars(req)["version"]
+// 	msg, err := ts.db.DeleteConfigGroup(id, version)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+// 	renderJSON(w, msg)
+// }
 
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("Starting: handling get config at %s\n", req.URL.Path)),
+	)
+
+	ctx := tracer.ContextWithSpan(context.Background(), span)
 
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
-	returnConfig, error := ts.db.Get(id, version)
+
+	returnConfig, error := ts.db.Get(ctx, id, version)
+	//to do for base
+
 	if error != nil {
-		renderJSON(w, "Error!")
+		renderJSON(ctx, w, "Error!")
 		return
 	}
 	if returnConfig.Id == "" {
-		renderJSON(w, "Error!")
+		renderJSON(ctx, w, "Error!")
 		return
 	}
-	renderJSON(w, returnConfig)
+	renderJSON(ctx, w, returnConfig)
 }
 
 func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("Starting: handling get group at %s\n", req.URL.Path)),
+	)
+
+	ctx := tracer.ContextWithSpan(context.Background(), span)
 
 	id := mux.Vars(req)["id"]
 	version := mux.Vars(req)["version"]
 
-	returnGroup, error := ts.db.GetGroup(id, version)
+	returnGroup, error := ts.db.GetGroup(ctx, id, version)
 
 	if error != nil {
-		renderJSON(w, "Error!")
+		renderJSON(ctx, w, "Error!")
 		return
 	}
 
 	if len(returnGroup.Configs) == 0 {
-		renderJSON(w, "Group doesn't exists!")
+		renderJSON(ctx, w, "Group doesn't exists!")
 		return
 	}
 
-	renderJSON(w, returnGroup)
+	renderJSON(ctx, w, returnGroup)
 }
 
-func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Request) {
+// func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Request) {
 
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	label := mux.Vars(req)["label"]
-	list := strings.Split(label, ";")
-	sort.Strings(list)
-	sortedLabel := ""
-	for _, v := range list {
-		sortedLabel += v + ";"
-	}
-	sortedLabel = sortedLabel[:len(sortedLabel)-1]
-	returnConfigs, error := ts.db.GetConfigsFromGroup(id, version, sortedLabel)
+// 	id := mux.Vars(req)["id"]
+// 	version := mux.Vars(req)["version"]
+// 	label := mux.Vars(req)["label"]
+// 	list := strings.Split(label, ";")
+// 	sort.Strings(list)
+// 	sortedLabel := ""
+// 	for _, v := range list {
+// 		sortedLabel += v + ";"
+// 	}
+// 	sortedLabel = sortedLabel[:len(sortedLabel)-1]
+// 	returnConfigs, error := ts.db.GetConfigsFromGroup(id, version, sortedLabel)
 
-	if error != nil {
-		renderJSON(w, "Error!")
-	}
-	renderJSON(w, returnConfigs)
-}
+// 	if error != nil {
+// 		renderJSON(w, "Error!")
+// 	}
+// 	renderJSON(w, returnConfigs)
+// }
 
-func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	rt, _, err := decodeBody(req.Body, 0)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+// func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
+// 	id := mux.Vars(req)["id"]
+// 	version := mux.Vars(req)["version"]
+// 	rt, _, err := decodeBody(req.Body, 0)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
 
-	group, err := ts.db.AddConfigsToGroup(id, version, rt.Configs[0])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	renderJSON(w, group)
-}
+// 	group, err := ts.db.AddConfigsToGroup(id, version, rt.Configs[0])
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+// 	renderJSON(w, group)
+// }

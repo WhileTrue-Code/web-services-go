@@ -4,7 +4,6 @@ import (
 	"WebServices/tracer"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -33,46 +32,53 @@ func New() (*Database, error) {
 	}, nil
 }
 
-func (ps *Database) Get(id string, version string) (*Config, error) {
+func (ps *Database) Get(ctx context.Context, id string, version string) (*Config, error) {
+	span := tracer.StartSpanFromContext(ctx, "GetConfigFromDatabase")
+	defer span.Finish()
+
+	ctxBase := tracer.ContextWithSpan(ctx, span)
+
 	kv := ps.cli.KV()
 
 	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
-	if err != nil {
-		return nil, err
-	}
+
+	spanBase := tracer.StartSpanFromContext(ctxBase, "Get one config from database")
+	defer spanBase.Finish()
 
 	if err != nil {
+		tracer.LogError(spanBase, err)
 		return nil, err
 	}
 
 	config := &Config{}
 	err = json.Unmarshal(pair.Value, config)
-
 	if err != nil {
+		tracer.LogError(span, err)
 		return nil, err
 	}
 
+	tracer.LogString("database_getConfigs", "Successful reading from database")
 	return config, nil
 }
 
-func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
-	kv := db.cli.KV()
-	_, err := kv.Delete(constructConfigKey(id, version), nil)
-	if err != nil {
-		return nil, err
-	}
+// func (db *Database) DeleteConfig(id string, version string) (map[string]string, error) {
+// 	kv := db.cli.KV()
+// 	_, err := kv.Delete(constructConfigKey(id, version), nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return map[string]string{"Deleted": id}, nil
-}
+// 	return map[string]string{"Deleted": id}, nil
+// }
 
-func (db *Database) DeleteConfigGroup(id string, version string) (map[string]string, error) {
-	kv := db.cli.KV()
-	_, err := kv.DeleteTree(constructGroupKey(id, version), nil)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]string{"Deleted": id}, nil
-}
+// func (db *Database) DeleteConfigGroup(id string, version string) (map[string]string, error) {
+// 	kv := db.cli.KV()
+// 	_, err := kv.DeleteTree(constructGroupKey(id, version), nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return map[string]string{"Deleted": id}, nil
+// }
 
 func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string, error) {
 	span := tracer.StartSpanFromContext(ctx, "DB create idempotency-key")
@@ -187,13 +193,23 @@ func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 	return group, nil
 }
 
-func (ps *Database) GetGroup(id string, version string) (*Group, error) {
+func (ps *Database) GetGroup(ctx context.Context, id string, version string) (*Group, error) {
+	span := tracer.StartSpanFromContext(ctx, "GetGroupFromDataBase")
+	defer span.Finish()
+
+	ctxBase := tracer.ContextWithSpan(context.Background(), span)
+
 	kv := ps.cli.KV()
 	cKey := constructKey(id, version, "1")
 	cKey = cKey[:len(cKey)-3]
 	fmt.Println("OVDE JE CKEY I ON GLASI: " + cKey)
 	data, _, err := kv.List(cKey, nil)
+
+	spanBase := tracer.StartSpanFromContext(ctxBase, "List method for group")
+	defer spanBase.Finish()
+
 	if err != nil {
+		tracer.LogError(spanBase, err)
 		return nil, err
 	}
 
@@ -202,6 +218,7 @@ func (ps *Database) GetGroup(id string, version string) (*Group, error) {
 		config := &Config{}
 		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
+			tracer.LogError(span, err)
 			return nil, err
 		}
 		configs = append(configs, *config)
@@ -211,13 +228,24 @@ func (ps *Database) GetGroup(id string, version string) (*Group, error) {
 	group.Version = version
 	group.Configs = configs
 
+	tracer.LogString("database_getConfigs", "Successful reading from database")
 	return group, nil
 }
 
-func (ps *Database) GetAllConfigs() ([]*Config, error) {
+func (ps *Database) GetAllConfigs(ctx context.Context) ([]*Config, error) {
+	span := tracer.StartSpanFromContext(ctx, "GetAllConfigs")
+	defer span.Finish()
+
+	ctxBase := tracer.ContextWithSpan(ctx, span)
+
 	kv := ps.cli.KV()
 	data, _, err := kv.List(allConfigs, nil)
+
+	spanBase := tracer.StartSpanFromContext(ctxBase, "Get configs from base")
+	defer spanBase.Finish()
+
 	if err != nil {
+		tracer.LogError(spanBase, err)
 		return nil, err
 	}
 
@@ -226,11 +254,12 @@ func (ps *Database) GetAllConfigs() ([]*Config, error) {
 		config := &Config{}
 		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
+			tracer.LogError(span, err)
 			return nil, err
 		}
 		configs = append(configs, config)
 	}
-
+	tracer.LogString("database_getConfigs", "Successful reading from database")
 	return configs, nil
 }
 
@@ -254,31 +283,31 @@ func (ps *Database) GetConfigsFromGroup(id string, version string, label string)
 	return configs, nil
 }
 
-func (ps *Database) AddConfigsToGroup(id string, version string, config Config) (*Group, error) {
+// func (ps *Database) AddConfigsToGroup(id string, version string, config Config) (*Group, error) {
 
-	group, error := ps.GetGroup(id, version)
-	if error != nil {
-		return nil, error
-	}
-	if len(group.Configs) < 1 {
-		return nil, errors.New("Group doesn't exists!")
-	}
+// 	group, error := ps.GetGroup(id, version)
+// 	if error != nil {
+// 		return nil, error
+// 	}
+// 	if len(group.Configs) < 1 {
+// 		return nil, errors.New("Group doesn't exists!")
+// 	}
 
-	groupW := Group{}
-	groupW.Id = id
-	groupW.Version = version
-	groupW.Configs = append(groupW.Configs, config)
+// 	groupW := Group{}
+// 	groupW.Id = id
+// 	groupW.Version = version
+// 	groupW.Configs = append(groupW.Configs, config)
 
-	_, err := ps.Group(&groupW)
+// 	_, err := ps.Group(&groupW)
 
-	if err != nil {
-		return nil, err
-	}
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	ret, err := ps.GetGroup(id, version)
-	if err != nil {
-		return nil, err
-	}
+// 	ret, err := ps.GetGroup(id, version)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return ret, nil
-}
+// 	return ret, nil
+// }
