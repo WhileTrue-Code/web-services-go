@@ -228,9 +228,13 @@ func (ps *Database) GetGroup(ctx context.Context, id string, version string) (*G
 	group.Version = version
 	group.Configs = configs
 
-	span.LogFields(
-		tracer.LogString("database_getConfigs", "Successful reading from database"),
-	)
+	if len(configs) == 0 {
+		tracer.LogError(span, fmt.Errorf("Group doesn't exists!"))
+	} else {
+		span.LogFields(
+			tracer.LogString("database_getConfigs", "Successful reading from database"),
+		)
+	}
 	return group, nil
 }
 
