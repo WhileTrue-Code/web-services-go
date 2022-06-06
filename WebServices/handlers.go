@@ -162,27 +162,41 @@ func (ts *Service) getConfigsHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(ctx, w, allTasks)
 }
 
-// func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	msg, err := ts.db.DeleteConfig(id, version)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-// 	renderJSON(w, msg)
-// }
+func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("deleteConfigHandler", ts.tracer, req)
+	defer span.Finish()
 
-// func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	msg, err := ts.db.DeleteConfigGroup(id, version)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-// 	renderJSON(w, msg)
-// }
+	span.LogFields(tracer.LogString("handler", fmt.Sprintf("Starting: handling delete config at %s\n", req.URL.Path)))
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := ts.db.DeleteConfig(ctx, id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		tracer.LogError(span, err)
+		return
+	}
+	renderJSON(ctx, w, msg)
+}
+
+func (ts *Service) delConfigGroupsHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("deleteGroupHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(tracer.LogString("handler", fmt.Sprintf("Starting: handling delete group at %s\n", req.URL.Path)))
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	msg, err := ts.db.DeleteConfigGroup(ctx, id, version)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		tracer.LogError(span, err)
+		return
+	}
+	renderJSON(ctx, w, msg)
+}
 
 func (ts *Service) viewConfigHandler(w http.ResponseWriter, req *http.Request) {
 	span := tracer.StartSpanFromRequest("getConfigsHandler", ts.tracer, req)
