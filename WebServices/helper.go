@@ -2,6 +2,8 @@ package main
 
 import (
 	"WebServices/database"
+	"WebServices/tracer"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +12,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func decodeBody(r io.Reader, i int) (database.Group, string, error) {
+func decodeBody(ctx context.Context, r io.Reader, i int) (database.Group, string, error) {
+	span := tracer.StartSpanFromContext(ctx, "decodeBody")
+	defer span.Finish()
+
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
@@ -19,10 +24,12 @@ func decodeBody(r io.Reader, i int) (database.Group, string, error) {
 
 	if i == 0 {
 		if err := dec.Decode(&cfg); err != nil {
+			tracer.LogError(span, err)
 			return database.Group{}, "", err
 		}
 	} else {
 		if err := dec.Decode(&group); err != nil {
+			tracer.LogError(span, err)
 			return database.Group{}, "", err
 		}
 	}
@@ -33,15 +40,18 @@ func decodeBody(r io.Reader, i int) (database.Group, string, error) {
 	}
 
 	if len(group.Configs) < 1 {
+		tracer.LogError(span, fmt.Errorf("configuration list is empty"))
 		return database.Group{}, "", fmt.Errorf("configuration list is empty")
 	}
 
 	return group, group.Version, nil
 }
 
-func renderJSON(w http.ResponseWriter, v interface{}) {
+func renderJSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	span := tracer.StartSpanFromContext(ctx, "renderJSON")
 	js, err := json.Marshal(v)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
