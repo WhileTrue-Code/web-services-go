@@ -274,19 +274,26 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 // 	renderJSON(w, returnConfigs)
 // }
 
-// func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	rt, _, err := decodeBody(req.Body, 0)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("updateGroupHandler", ts.tracer, req)
+	defer span.Finish()
 
-// 	group, err := ts.db.AddConfigsToGroup(id, version, rt.Configs[0])
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-// 	renderJSON(w, group)
-// }
+	span.LogFields(tracer.LogString("handler", fmt.Sprintf("Starting: handling update group at %s\n", req.URL.Path)))
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	rt, _, err := decodeBody(ctx, req.Body, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	group, err := ts.db.AddConfigsToGroup(ctx, id, version, rt.Configs[0])
+	if err != nil {
+		tracer.LogError(span, err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	renderJSON(ctx, w, group)
+}
