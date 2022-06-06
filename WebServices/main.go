@@ -42,7 +42,7 @@ func main() {
 	router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
 	router.Path("/metrics").Handler(metricsHandler())
 
-	srv := &http.Server{Addr: "0.0.0.0:8001", Handler: router}
+	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
 	go func() {
 		log.Println("server starting")
 		if err := srv.ListenAndServe(); err != nil {

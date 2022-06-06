@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 )
-//cc
+
 func decodeBody(r io.Reader, i int) (database.Group, string, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
