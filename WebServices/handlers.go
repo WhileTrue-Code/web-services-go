@@ -1,7 +1,10 @@
 package main
 
 import (
+	tracer "WebServices/tracer"
+	"context"
 	"errors"
+	"fmt"
 	"mime"
 	"net/http"
 	"sort"
@@ -12,34 +15,46 @@ import (
 
 //TO-DO
 func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("createConfigHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling create config at %s", req.URL.Path)),
+	)
+	ctx := tracer.ContextWithSpan(context.Background(), span)
 	contentType := req.Header.Get("Content-Type")
 	ideKeyID := req.Header.Get("Idempotency-key")
 
 	if ideKeyID == "" {
-		renderJSON(w, "Idempotency-key not represented")
+		tracer.LogError(span, fmt.Errorf("idempotency-key not represented"))
+		renderJSON(ctx, w, "Idempotency-key not represented")
 		return
 	}
 
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if mediatype != "application/json" {
 		err := errors.New("expect application/json content-type")
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
 
-	rt, _, err := decodeBody(req.Body, 0)
+	rt, _, err := decodeBody(ctx, req.Body, 0)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -47,51 +62,66 @@ func (ts *Service) createConfHandler(w http.ResponseWriter, req *http.Request) {
 	if ideKey == nil {
 		_, err := ts.db.IdempotencyKey(&ideKeyID)
 		if err != nil {
-			renderJSON(w, "error occured")
+			tracer.LogError(span, err)
+			renderJSON(ctx, w, "error occured")
 			return
 		}
 		conf, err := ts.db.Config(&rt.Configs[0])
 		if err != nil {
-			renderJSON(w, "error occured")
+			tracer.LogError(span, err)
+			renderJSON(ctx, w, "error occured")
 			return
 		}
 
-		renderJSON(w, conf)
+		renderJSON(ctx, w, conf)
 	} else {
-		renderJSON(w, "Saved.")
+		renderJSON(ctx, w, "Saved.")
 	}
 
 }
 
 func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("createConfigHandler", ts.tracer, req)
+	defer span.Finish()
+
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("handling create config group at %s", req.URL.Path)),
+	)
+
+	ctx := tracer.ContextWithSpan(context.Background(), span)
 	contentType := req.Header.Get("Content-Type")
 	ideKeyID := req.Header.Get("Idempotency-key")
 
 	if ideKeyID == "" {
-		renderJSON(w, "Idempotency-key not represented")
+		tracer.LogError(span, fmt.Errorf("idempotency-key not represented"))
+		renderJSON(ctx, w, "Idempotency-key not represented")
 		return
 	}
 
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if mediatype != "application/json" {
 		err := errors.New("expect application/json content-type")
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 		return
 	}
 
 	rt, v, err := decodeBody(req.Body, 1)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	ideKey, err := ts.db.GetIdempotencyKey(&ideKeyID)
 	if err != nil {
+		tracer.LogError(span, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -99,19 +129,22 @@ func (ts *Service) createConfGroupHandler(w http.ResponseWriter, req *http.Reque
 	if ideKey == nil {
 		_, err := ts.db.IdempotencyKey(&ideKeyID)
 		if err != nil {
-			renderJSON(w, "error occured")
+			tracer.LogError(span, err)
+			renderJSON(ctx, w, "error occured")
 			return
 		}
 
 		rt.Version = v
 		group, err := ts.db.Group(&rt)
 		if err != nil {
-			renderJSON(w, "error occured")
+			tracer.LogError(span, err)
+			renderJSON(ctx, w, "error occured")
+			return
 		}
 
-		renderJSON(w, group)
+		renderJSON(ctx, w, group)
 	} else {
-		renderJSON(w, "Saved.")
+		renderJSON(ctx, w, "Saved.")
 	}
 
 }

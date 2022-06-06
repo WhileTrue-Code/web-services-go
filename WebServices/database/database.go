@@ -1,6 +1,8 @@
 package database
 
 import (
+	"WebServices/tracer"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -72,43 +74,63 @@ func (db *Database) DeleteConfigGroup(id string, version string) (map[string]str
 	return map[string]string{"Deleted": id}, nil
 }
 
-func (db *Database) IdempotencyKey(ideKey *string) (*string, error) {
+func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string, error) {
+	span := tracer.StartSpanFromContext(ctx, "DB create idempotency-key")
+	defer span.Finish()
+
 	kv := db.cli.KV()
 
 	dbIdeKey := constructKey(*ideKey, "", "")
-	fmt.Println("ISKONSTRUISANI DBIDEKEY IZGLEDA: " + dbIdeKey)
+	// fmt.Println("ISKONSTRUISANI DBIDEKEY IZGLEDA: " + dbIdeKey)
 
 	byteIdeKey := []byte(*ideKey)
 
 	iKey := &api.KVPair{Key: dbIdeKey, Value: byteIdeKey}
 	_, err := kv.Put(iKey, nil)
+	spanF := tracer.StartSpanFromContext(ctx, "Put idempotency-key in DB")
+	defer spanF.Finish()
+
 	if err != nil {
+		tracer.LogError(spanF, err)
 		return nil, err
 	}
+
+	tracer.LogString("database-IdeKeySave", "Idempotency-key is saved.")
 	return ideKey, nil
 
 }
 
-func (db *Database) GetIdempotencyKey(ideKey *string) (*string, error) {
+func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*string, error) {
+	span := tracer.StartSpanFromContext(ctx, "DB get idempotency-key")
+	defer span.Finish()
+
+	ctxDB := tracer.ContextWithSpan(context.Background(), span)
 	kv := db.cli.KV()
 
 	pair, _, err := kv.Get(constructKey(*ideKey, "", ""), nil)
+	spanF := tracer.StartSpanFromContext(ctxDB, "Put idempotency-key in DB")
+	defer spanF.Finish()
 
 	if err != nil {
+		tracer.LogError(spanF, err)
 		return nil, err
 	}
 
 	if pair == nil {
+		tracer.LogError(spanF, err)
 		return nil, nil
 	}
 
 	iK := string(pair.Value)
-
+	tracer.LogString("database-IdeKeyGet", "Idempotency-key is taken.")
 	return &iK, nil
 
 }
 
-func (db *Database) Config(config *Config) (*Config, error) {
+func (db *Database) Config(ctx context.Context, config *Config) (*Config, error) {
+	span := tracer.StartSpanFromContext(ctx, "Save config DB")
+	defer span.Finish()
+
 	kv := db.cli.KV()
 
 	dbkey, id := generateKey(config.Id, config.Version, "")
@@ -128,7 +150,7 @@ func (db *Database) Config(config *Config) (*Config, error) {
 
 }
 
-func (db *Database) Group(group *Group) (*Group, error) {
+func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 	kv := db.cli.KV()
 
 	if group.Id == "" {
