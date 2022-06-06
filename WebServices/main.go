@@ -30,16 +30,15 @@ func main() {
 		db: dbase,
 	}
 
-	router.HandleFunc("/config/", count(server.createConfHandler)).Methods("POST")
-	router.HandleFunc("/group/", count(server.createConfGroupHandler)).Methods("POST")
+	// router.HandleFunc("/config/", count(server.createConfHandler)).Methods("POST")
+	// router.HandleFunc("/group/", count(server.createConfGroupHandler)).Methods("POST")
 	router.HandleFunc("/configs/", count(server.getConfigsHandler)).Methods("GET")
-	router.HandleFunc("/groups/", count(server.getGroupsHandler)).Methods("GET")
-	router.HandleFunc("/config/{id}/{version}/", count(server.delConfigHandler)).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{version}/", count(server.delConfigGroupsHandler)).Methods("DELETE")
+	// router.HandleFunc("/config/{id}/{version}/", count(server.delConfigHandler)).Methods("DELETE")
+	// router.HandleFunc("/group/{id}/{version}/", count(server.delConfigGroupsHandler)).Methods("DELETE")
 	router.HandleFunc("/config/{id}/{version}/", count(server.viewConfigHandler)).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", count(server.viewGroupHandler)).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/{label}/", count(server.viewGroupLabelHandler)).Methods("GET")
-	router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
+	// router.HandleFunc("/group/{id}/{version}/{label}/", count(server.viewGroupLabelHandler)).Methods("GET")
+	// router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
 	router.Path("/metrics").Handler(metricsHandler())
 
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
