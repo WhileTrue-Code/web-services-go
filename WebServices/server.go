@@ -3,8 +3,9 @@ package main
 import (
 	db "WebServices/database"
 	tracer "WebServices/tracer"
-	opentracing "github.com/opentracing/opentracing-go"
 	"io"
+
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 const (
@@ -12,13 +13,13 @@ const (
 )
 
 type Service struct {
-	db *db.Database
+	db     *db.Database
 	tracer opentracing.Tracer
 	closer io.Closer
 }
 
-func NewPostServer() (*Service, error) {
-	db, err := db.New()
+func NewConfigServer() (*Service, error) {
+	dbN, err := db.New()
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +27,7 @@ func NewPostServer() (*Service, error) {
 	tracer, closer := tracer.Init(name)
 	opentracing.SetGlobalTracer(tracer)
 	return &Service{
-		db:  db,
+		db:     dbN,
 		tracer: tracer,
 		closer: closer,
 	}, nil
