@@ -37,14 +37,13 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 	span := tracer.StartSpanFromContext(ctx, "GetConfigFromDatabase")
 	defer span.Finish()
 
-	ctxBase := tracer.ContextWithSpan(ctx, span)
+	// ctxBase := tracer.ContextWithSpan(ctx, span)
 
 	kv := ps.cli.KV()
 
+	spanBase := tracer.StartSpanFromContext(ctx, "Get one config from database")
 	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
-
-	spanBase := tracer.StartSpanFromContext(ctxBase, "Get one config from database")
-	defer spanBase.Finish()
+	spanBase.Finish()
 
 	if pair == nil {
 		tracer.LogError(spanBase, fmt.Errorf("ne postoji konfiguracija."))
