@@ -33,7 +33,7 @@ func main() {
 	router.HandleFunc("/group/{id}/{version}/", count(server.delConfigGroupsHandler)).Methods("DELETE")
 	router.HandleFunc("/config/{id}/{version}/", count(server.viewConfigHandler)).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", count(server.viewGroupHandler)).Methods("GET")
-	// router.HandleFunc("/group/{id}/{version}/{label}/", count(server.viewGroupLabelHandler)).Methods("GET")
+	router.HandleFunc("/group/{id}/{version}/{label}/", count(server.viewGroupLabelHandler)).Methods("GET")
 	router.HandleFunc("/group/{id}/{version}/", count(server.updateConfigHandler)).Methods("PUT")
 	router.Path("/metrics").Handler(metricsHandler())
 
