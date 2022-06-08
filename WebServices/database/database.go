@@ -46,6 +46,11 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Get one config from database")
 	defer spanBase.Finish()
 
+	if pair == nil {
+		tracer.LogError(spanBase, fmt.Errorf("ne postoji konfiguracija."))
+		return nil, fmt.Errorf("ne postoji konfiguracija.")
+	}
+
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
