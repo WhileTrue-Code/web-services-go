@@ -42,6 +42,7 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 	kv := ps.cli.KV()
 
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Get one config from database")
+
 	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
 
 	if pair == nil {
