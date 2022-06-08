@@ -130,9 +130,9 @@ func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string
 
 	byteIdeKey := []byte(*ideKey)
 
-	spanF := tracer.StartSpanFromContext(ctx, "Put idempotency-key in DB")
 	iKey := &api.KVPair{Key: dbIdeKey, Value: byteIdeKey}
 	_, err := kv.Put(iKey, nil)
+	spanF := tracer.StartSpanFromContext(ctx, "Put idempotency-key in DB")
 	defer spanF.Finish()
 
 	if err != nil {
@@ -154,6 +154,7 @@ func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*str
 
 	pair, _, err := kv.Get(constructKey(*ideKey, "", ""), nil)
 	spanF := tracer.StartSpanFromContext(ctxDB, "Put idempotency-key in DB")
+	defer spanF.Finish()
 
 	if err != nil {
 		tracer.LogError(spanF, err)
@@ -164,7 +165,6 @@ func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*str
 		tracer.LogError(spanF, err)
 		return nil, nil
 	}
-	spanF.Finish()
 
 	iK := string(pair.Value)
 
