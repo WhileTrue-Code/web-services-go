@@ -42,10 +42,8 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 
 	kv := ps.cli.KV()
 
-	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Get one config from database")
-	defer spanBase.Finish()
+	pair, _, err := kv.Get(constructKey(id, version, ""), nil)
 
 	if pair == nil {
 		tracer.LogError(spanBase, fmt.Errorf("ne postoji konfiguracija."))
@@ -56,7 +54,7 @@ func (ps *Database) Get(ctx context.Context, id string, version string) (*Config
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
-
+	spanBase.Finish()
 	config := &Config{}
 	err = json.Unmarshal(pair.Value, config)
 	if err != nil {
@@ -81,17 +79,14 @@ func (db *Database) DeleteConfig(ctx context.Context, id string, version string)
 		tracer.LogError(span, fmt.Errorf("Config does not exist!"))
 		return nil, err1
 	}
-
-	_, err := kv.Delete(constructConfigKey(config.Id, config.Version), nil)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Delete one config from database")
-	defer spanBase.Finish()
+	_, err := kv.Delete(constructConfigKey(config.Id, config.Version), nil)
 
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
-
+	spanBase.Finish()
 	tracer.LogString("database_deleteConfig", "Successfully deleted from database")
 
 	return map[string]string{"Deleted": id}, nil
@@ -110,15 +105,14 @@ func (db *Database) DeleteConfigGroup(ctx context.Context, id string, version st
 
 	kv := db.cli.KV()
 
-	_, err := kv.DeleteTree(constructGroupKey(group.Id, group.Version), nil)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Delete one group from database")
-	defer spanBase.Finish()
+	_, err := kv.DeleteTree(constructGroupKey(group.Id, group.Version), nil)
 
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
+	spanBase.Finish()
 	return map[string]string{"Deleted": id}, nil
 }
 
@@ -134,15 +128,14 @@ func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string
 	byteIdeKey := []byte(*ideKey)
 
 	iKey := &api.KVPair{Key: dbIdeKey, Value: byteIdeKey}
-	_, err := kv.Put(iKey, nil)
 	spanF := tracer.StartSpanFromContext(ctx, "Put idempotency-key in DB")
-	defer spanF.Finish()
+	_, err := kv.Put(iKey, nil)
 
 	if err != nil {
 		tracer.LogError(spanF, err)
 		return nil, err
 	}
-
+	spanF.Finish()
 	tracer.LogString("database-IdeKeySave", "Idempotency-key is saved.")
 	return ideKey, nil
 
@@ -155,9 +148,8 @@ func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*str
 	ctxDB := tracer.ContextWithSpan(context.Background(), span)
 	kv := db.cli.KV()
 
-	pair, _, err := kv.Get(constructKey(*ideKey, "", ""), nil)
 	spanF := tracer.StartSpanFromContext(ctxDB, "Put idempotency-key in DB")
-	defer spanF.Finish()
+	pair, _, err := kv.Get(constructKey(*ideKey, "", ""), nil)
 
 	if err != nil {
 		tracer.LogError(spanF, err)
@@ -168,7 +160,7 @@ func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*str
 		tracer.LogError(spanF, err)
 		return nil, nil
 	}
-
+	spanF.Finish()
 	iK := string(pair.Value)
 
 	span.LogFields(
@@ -223,7 +215,6 @@ func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 	}
 
 	spanF := tracer.StartSpanFromContext(ctxDB, "Database kv.Put")
-	defer spanF.Finish()
 
 	for _, v := range group.Configs {
 		label := ""
@@ -253,7 +244,7 @@ func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 			return nil, err
 		}
 	}
-
+	spanF.Finish()
 	span.LogFields(
 		tracer.LogString("GroupDB", "Successful saving group to database."),
 	)
@@ -270,16 +261,14 @@ func (ps *Database) GetGroup(ctx context.Context, id string, version string) (*G
 	cKey := constructKey(id, version, "1")
 	cKey = cKey[:len(cKey)-3]
 	fmt.Println("OVDE JE CKEY I ON GLASI: " + cKey)
-	data, _, err := kv.List(cKey, nil)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "List method for group")
-	defer spanBase.Finish()
+	data, _, err := kv.List(cKey, nil)
 
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
-
+	spanBase.Finish()
 	configs := []Config{}
 	for _, pair := range data {
 		config := &Config{}
@@ -312,16 +301,14 @@ func (ps *Database) GetAllConfigs(ctx context.Context) ([]*Config, error) {
 	ctxBase := tracer.ContextWithSpan(ctx, span)
 
 	kv := ps.cli.KV()
-	data, _, err := kv.List(allConfigs, nil)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "List configs from database")
-	defer spanBase.Finish()
+	data, _, err := kv.List(allConfigs, nil)
 
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
-
+	spanBase.Finish()
 	configs := []*Config{}
 	for _, pair := range data {
 		config := &Config{}
@@ -346,16 +333,14 @@ func (ps *Database) GetConfigsFromGroup(ctx context.Context, id string, version 
 	ctxF := tracer.ContextWithSpan(ctx, span)
 
 	kv := ps.cli.KV()
-	data, _, err := kv.List(constructKey(id, version, label), nil)
-
 	spanF := tracer.StartSpanFromContext(ctxF, "List configs from group with label")
-	defer spanF.Finish()
+	data, _, err := kv.List(constructKey(id, version, label), nil)
 
 	if err != nil {
 		tracer.LogError(spanF, err)
 		return nil, err
 	}
-
+	spanF.Finish()
 	configs := []*Config{}
 	for _, pair := range data {
 		config := &Config{}
@@ -393,16 +378,14 @@ func (ps *Database) AddConfigsToGroup(ctx context.Context, id string, version st
 	groupW.Version = version
 	groupW.Configs = append(groupW.Configs, config)
 
-	_, err := ps.Group(ctx, &groupW)
-
 	spanBase := tracer.StartSpanFromContext(ctxBase, "Put config into group - database")
-	defer spanBase.Finish()
+	_, err := ps.Group(ctx, &groupW)
 
 	if err != nil {
 		tracer.LogError(spanBase, err)
 		return nil, err
 	}
-
+	spanBase.Finish()
 	ret, err := ps.GetGroup(ctx, id, version)
 	if err != nil {
 		tracer.LogError(spanBase, err)
