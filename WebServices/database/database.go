@@ -17,7 +17,7 @@ type Database struct {
 	cli *api.Client
 }
 
-//aca_lukas3
+//aca_lukas<3belo
 func New() (*Database, error) {
 	db := os.Getenv("DB")
 	dbport := os.Getenv("DBPORT")
