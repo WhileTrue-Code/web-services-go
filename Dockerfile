@@ -3,7 +3,7 @@ FROM golang:latest as builder
 
 
 # Set the Current Working Directory inside the container
-WORKDIR /app/WebServices/
+WORKDIR /app/
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
