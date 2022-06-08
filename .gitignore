@@ -12,6 +12,9 @@
 *.out
 
 *.yml
+WebServices/prometheus-data
+WebServices/go.mod
+WebServices/go.sum
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

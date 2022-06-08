@@ -7,30 +7,36 @@ import (
 )
 
 const (
-	group        = "groups/%s/%s/%s/"
-	groupVersion = "groups/%s/%s"
-	config       = "configs/%s/%s"
-	allGroups    = "groups"
-	allConfigs   = "configs"
+	group          = "groups/%s/%s/%s/"
+	groupVersion   = "groups/%s/%s"
+	config         = "configs/%s/%s"
+	allGroups      = "groups"
+	allConfigs     = "configs"
+	idempotencyKey = "request/%s"
 )
 
-func generateKey(groupId string, version string, label string) (string, string) {
+func generateKey(newId string, version string, label string) (string, string) {
 	id := uuid.New().String()
-	if groupId == "" {
+	if label == "" {
+		if newId != "" {
+			return fmt.Sprintf(config, newId, version), newId
+		}
 		return fmt.Sprintf(config, id, version), id
 
 	} else {
-		return fmt.Sprintf(group, groupId, version, label), groupId
+		return fmt.Sprintf(group, newId, version, label), newId
 	}
 }
 
 func constructKey(id string, version string, label string) string {
-	if label == "" {
+	if version == "" && label == "" {
+		return fmt.Sprintf(idempotencyKey, id)
+	} else if label == "" {
 		return fmt.Sprintf(config, id, version)
-	} else {
+	} else if label != "" {
 		return fmt.Sprintf(group, id, version, label)
 	}
-
+	return ""
 }
 
 func constructConfigKey(id string, version string) string {
