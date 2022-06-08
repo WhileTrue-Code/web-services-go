@@ -11,7 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-*.yml
+docker-compose.yml
+prometheus.yml
 WebServices/prometheus-data
 WebServices/go.mod
 WebServices/go.sum
