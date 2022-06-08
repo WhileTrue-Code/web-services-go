@@ -3,10 +3,10 @@ FROM golang:latest as builder
 
 
 # Set the Current Working Directory inside the container
-WORKDIR /app
+WORKDIR /app/WebServices/
 
 # Copy go mod and sum files
-COPY go.mod go.sum ./WebServices
+COPY go.mod go.sum ./
 
 
 # Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
