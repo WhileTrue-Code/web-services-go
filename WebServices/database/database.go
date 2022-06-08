@@ -164,7 +164,10 @@ func (db *Database) GetIdempotencyKey(ctx context.Context, ideKey *string) (*str
 	}
 
 	iK := string(pair.Value)
-	tracer.LogString("database-IdeKeyGet", "Idempotency-key is taken.")
+
+	span.LogFields(
+		tracer.LogString("database-IdeKeyGet", "Idempotency-key is taken."),
+	)
 	return &iK, nil
 
 }
@@ -173,6 +176,7 @@ func (db *Database) Config(ctx context.Context, config *Config) (*Config, error)
 	span := tracer.StartSpanFromContext(ctx, "Save config DB")
 	defer span.Finish()
 
+	ctxDB := tracer.ContextWithSpan(context.Background(), span)
 	kv := db.cli.KV()
 
 	dbkey, id := generateKey(config.Id, config.Version, "")
@@ -180,24 +184,40 @@ func (db *Database) Config(ctx context.Context, config *Config) (*Config, error)
 
 	data, err := json.Marshal(config)
 	if err != nil {
+		tracer.LogError(span, err)
 		return nil, err
 	}
 
 	c := &api.KVPair{Key: dbkey, Value: data}
 	_, err = kv.Put(c, nil)
+	spanF := tracer.StartSpanFromContext(ctxDB, "Save config in DB")
+	defer spanF.Finish()
 	if err != nil {
+		tracer.LogError(spanF, err)
 		return nil, err
 	}
+
+	span.LogFields(
+		tracer.LogString("ConfigDB", "Successful saving configuration to database."),
+	)
 	return config, nil
 
 }
 
 func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
+	span := tracer.StartSpanFromContext(ctx, "Save group DB")
+	defer span.Finish()
+
+	ctxDB := tracer.ContextWithSpan(context.Background(), span)
+
 	kv := db.cli.KV()
 
 	if group.Id == "" {
 		group.Id = uuid.New().String()
 	}
+
+	spanF := tracer.StartSpanFromContext(ctxDB, "Database kv.Put")
+	defer spanF.Finish()
 
 	for _, v := range group.Configs {
 		label := ""
@@ -215,6 +235,7 @@ func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 		dbkey, _ := generateKey(group.Id, group.Version, label)
 		data, err := json.Marshal(v)
 		if err != nil {
+			tracer.LogError(span, err)
 			return nil, err
 		}
 		databaseKey := dbkey + uuid.New().String()
@@ -222,10 +243,14 @@ func (db *Database) Group(ctx context.Context, group *Group) (*Group, error) {
 		g := &api.KVPair{Key: databaseKey, Value: data}
 		_, err = kv.Put(g, nil)
 		if err != nil {
+			tracer.LogError(spanF, err)
 			return nil, err
 		}
 	}
 
+	span.LogFields(
+		tracer.LogString("GroupDB", "Successful saving group to database."),
+	)
 	return group, nil
 }
 
@@ -308,10 +333,20 @@ func (ps *Database) GetAllConfigs(ctx context.Context) ([]*Config, error) {
 	return configs, nil
 }
 
-func (ps *Database) GetConfigsFromGroup(id string, version string, label string) ([]*Config, error) {
+func (ps *Database) GetConfigsFromGroup(ctx context.Context, id string, version string, label string) ([]*Config, error) {
+	span := tracer.StartSpanFromContext(ctx, "GetConfigsFromGroup DB")
+	defer span.Finish()
+
+	ctxF := tracer.ContextWithSpan(ctx, span)
+
 	kv := ps.cli.KV()
 	data, _, err := kv.List(constructKey(id, version, label), nil)
+
+	spanF := tracer.StartSpanFromContext(ctxF, "List configs from group with label")
+	defer spanF.Finish()
+
 	if err != nil {
+		tracer.LogError(spanF, err)
 		return nil, err
 	}
 
@@ -320,11 +355,15 @@ func (ps *Database) GetConfigsFromGroup(id string, version string, label string)
 		config := &Config{}
 		err = json.Unmarshal(pair.Value, config)
 		if err != nil {
+			tracer.LogError(span, err)
 			return nil, err
 		}
 		configs = append(configs, config)
 	}
 
+	span.LogFields(
+		tracer.LogString("DB viewConfigsFromGroup", "Successful reading configs with label from database"),
+	)
 	return configs, nil
 }
 

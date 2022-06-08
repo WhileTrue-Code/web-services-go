@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -254,25 +256,33 @@ func (ts *Service) viewGroupHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(ctx, w, returnGroup)
 }
 
-// func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) viewGroupLabelHandler(w http.ResponseWriter, req *http.Request) {
+	span := tracer.StartSpanFromRequest("viewGroupLabelHandler", ts.tracer, req)
+	defer span.Finish()
 
-// 	id := mux.Vars(req)["id"]
-// 	version := mux.Vars(req)["version"]
-// 	label := mux.Vars(req)["label"]
-// 	list := strings.Split(label, ";")
-// 	sort.Strings(list)
-// 	sortedLabel := ""
-// 	for _, v := range list {
-// 		sortedLabel += v + ";"
-// 	}
-// 	sortedLabel = sortedLabel[:len(sortedLabel)-1]
-// 	returnConfigs, error := ts.db.GetConfigsFromGroup(id, version, sortedLabel)
+	span.LogFields(
+		tracer.LogString("handler", fmt.Sprintf("Starting: handling view configs with label at %s\n", req.URL.Path)),
+	)
 
-// 	if error != nil {
-// 		renderJSON(w, "Error!")
-// 	}
-// 	renderJSON(w, returnConfigs)
-// }
+	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
+	label := mux.Vars(req)["label"]
+	list := strings.Split(label, ";")
+	sort.Strings(list)
+	sortedLabel := ""
+	for _, v := range list {
+		sortedLabel += v + ";"
+	}
+	sortedLabel = sortedLabel[:len(sortedLabel)-1]
+
+	ctx := tracer.ContextWithSpan(context.Background(), span)
+	returnConfigs, error := ts.db.GetConfigsFromGroup(ctx, id, version, sortedLabel)
+
+	if error != nil {
+		renderJSON(ctx, w, error)
+	}
+	renderJSON(ctx, w, returnConfigs)
+}
 
 func (ts *Service) updateConfigHandler(w http.ResponseWriter, req *http.Request) {
 	span := tracer.StartSpanFromRequest("updateGroupHandler", ts.tracer, req)
