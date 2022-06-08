@@ -120,6 +120,8 @@ func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string
 	span := tracer.StartSpanFromContext(ctx, "DB create idempotency-key")
 	defer span.Finish()
 
+	ctxBase := tracer.ContextWithSpan(context.Background(), span)
+
 	kv := db.cli.KV()
 
 	dbIdeKey := constructKey(*ideKey, "", "")
@@ -127,8 +129,9 @@ func (db *Database) IdempotencyKey(ctx context.Context, ideKey *string) (*string
 
 	byteIdeKey := []byte(*ideKey)
 
+	spanF := tracer.StartSpanFromContext(ctxBase, "Put idempotency-key in DB")
 	iKey := &api.KVPair{Key: dbIdeKey, Value: byteIdeKey}
-	spanF := tracer.StartSpanFromContext(ctx, "Put idempotency-key in DB")
+
 	_, err := kv.Put(iKey, nil)
 
 	if err != nil {
@@ -187,14 +190,14 @@ func (db *Database) Config(ctx context.Context, config *Config) (*Config, error)
 	}
 
 	c := &api.KVPair{Key: dbkey, Value: data}
-	_, err = kv.Put(c, nil)
 	spanF := tracer.StartSpanFromContext(ctxDB, "Save config in DB")
-	defer spanF.Finish()
+	_, err = kv.Put(c, nil)
+
 	if err != nil {
 		tracer.LogError(spanF, err)
 		return nil, err
 	}
-
+	spanF.Finish()
 	span.LogFields(
 		tracer.LogString("ConfigDB", "Successful saving configuration to database."),
 	)
