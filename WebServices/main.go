@@ -56,7 +56,7 @@ func main() {
 
 	log.Println("service shutting down ...")
 
-	// gracefully stop server
+	// gracefully stop serverr
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
