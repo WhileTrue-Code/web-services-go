@@ -9,13 +9,11 @@ import (
 )
 
 var (
-	// Initial count.
 	currentCount = 0
 
-	// The Prometheus metric that will be exposed.
 	httpHits = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "total_hits",
+			Name: "my_app_http_hit_total",
 			Help: "Total number of http hits.",
 		},
 	)
@@ -48,15 +46,48 @@ var (
 		},
 	)
 
-	// Add all metrics that will be resisted
-	metricsList = []prometheus.Collector{httpHits, httpGetConfigHits, httpPostConfigHits, httpDeleteConfigHits, httpGetConfigsHits}
+	httpGetGroupsHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "getGroups_hits",
+			Help: "getGroups_hits",
+		},
+	)
 
-	// Prometheus Registry to register metrics.
+	httpPostGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "postGroup_hits",
+			Help: "postGroup_hits",
+		},
+	)
+
+	httpDeleteGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "deleteGroup_hits",
+			Help: "deleteGroup_hits",
+		},
+	)
+
+	httpPutGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "putGroup_hits",
+			Help: "putGroup_hits",
+		},
+	)
+
+	httpGetConfigFromGroupHits = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "getConfigFromGroup_hits",
+			Help: "getConfigFromGroup_hits",
+		},
+	)
+
+	metricsList = []prometheus.Collector{httpHits, httpGetConfigHits, httpPostConfigHits, httpDeleteConfigHits,
+		httpGetConfigsHits, httpGetGroupsHits, httpPostGroupHits, httpDeleteGroupHits, httpPutGroupHits, httpGetConfigFromGroupHits}
+
 	prometheusRegistry = prometheus.NewRegistry()
 )
 
 func init() {
-	// Register metrics that will be exposed.
 	prometheusRegistry.MustRegister(metricsList...)
 }
 
@@ -81,7 +112,20 @@ func count(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter,
 				httpGetConfigsHits.Inc()
 			}
 		}
+		if URL == "group" {
+			if r.Method == "GET" && strings.Split(r.URL.String(), "/")[4] == "" {
+				httpGetGroupsHits.Inc()
+			} else if r.Method == "POST" {
+				httpPostGroupHits.Inc()
+			} else if r.Method == "DELETE" {
+				httpDeleteGroupHits.Inc()
+			} else if r.Method == "PUT" {
+				httpPutGroupHits.Inc()
+			} else if r.Method == "GET" && strings.Split(r.URL.String(), "/")[4] != "" {
+				httpGetConfigFromGroupHits.Inc()
+			}
+		}
 		httpHits.Inc()
-		f(w, r) // original function call
+		f(w, r)
 	}
 }
